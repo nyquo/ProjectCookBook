@@ -1,0 +1,17 @@
+# Build output
+/build/
+
+# Machine-specific settings
+CMakeUserPresets.json
+scripts/local.ps1
+*.user
+*.user.*
+.qtcreator/
+.idea/
+.cache/
+compile_commands.json
+
+# Signing keys must never be committed
+*.jks
+*.keystore
+keystore.properties

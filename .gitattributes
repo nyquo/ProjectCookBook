@@ -1,0 +1,13 @@
+* text=auto
+
+# Windows scripts keep CRLF so every PowerShell/cmd version reads them cleanly.
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.sh  text eol=lf
+
+*.png  binary
+*.jpg  binary
+*.webp binary
+*.ttf  binary
+*.otf  binary

@@ -1,0 +1,66 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "description": "Paths come from QT_VERSION_DIR (e.g. C:/Qt/6.12.0), ANDROID_SDK_ROOT and ANDROID_NDK_ROOT. scripts/env.ps1 sets them.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "environment": {
+        "PATH": "$env{QT_VERSION_DIR}/../Tools/Ninja${pathListSep}$penv{PATH}"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "desktop",
+      "displayName": "Desktop (Windows, MinGW)",
+      "description": "Native Windows build for fast UI iteration.",
+      "inherits": "base",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+      "environment": {
+        "PATH": "$env{QT_VERSION_DIR}/../Tools/mingw1310_64/bin${pathListSep}$env{QT_VERSION_DIR}/../Tools/Ninja${pathListSep}$penv{PATH}"
+      },
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "$env{QT_VERSION_DIR}/mingw_64"
+      }
+    },
+    {
+      "name": "android-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "ANDROID_SDK_ROOT": "$env{ANDROID_SDK_ROOT}",
+        "ANDROID_NDK_ROOT": "$env{ANDROID_NDK_ROOT}"
+      }
+    },
+    {
+      "name": "android-x86_64",
+      "displayName": "Android x86_64 (emulator)",
+      "inherits": "android-base",
+      "toolchainFile": "$env{QT_VERSION_DIR}/android_x86_64/lib/cmake/Qt6/qt.toolchain.cmake"
+    },
+    {
+      "name": "android-arm64-v8a",
+      "displayName": "Android arm64-v8a (64-bit phones)",
+      "inherits": "android-base",
+      "toolchainFile": "$env{QT_VERSION_DIR}/android_arm64_v8a/lib/cmake/Qt6/qt.toolchain.cmake"
+    },
+    {
+      "name": "android-armeabi-v7a",
+      "displayName": "Android armeabi-v7a (older 32-bit phones)",
+      "inherits": "android-base",
+      "toolchainFile": "$env{QT_VERSION_DIR}/android_armv7/lib/cmake/Qt6/qt.toolchain.cmake"
+    }
+  ],
+  "buildPresets": [
+    { "name": "desktop", "configurePreset": "desktop" },
+    { "name": "android-x86_64", "configurePreset": "android-x86_64", "targets": [ "apk" ] },
+    { "name": "android-arm64-v8a", "configurePreset": "android-arm64-v8a", "targets": [ "apk" ] },
+    { "name": "android-armeabi-v7a", "configurePreset": "android-armeabi-v7a", "targets": [ "apk" ] }
+  ]
+}

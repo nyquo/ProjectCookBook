@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder chef-hat icon. Everything stays inside the 66dp adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,48 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,41 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M56,48 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M41,46 H67 V68 H41 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M43,71 H65 a2,2 0 0 1 2,2 V75 a2,2 0 0 1 -2,2 H43 a2,2 0 0 1 -2,-2 V73 a2,2 0 0 1 2,-2 Z" />
+</vector>
