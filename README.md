@@ -1,6 +1,6 @@
 # Project Cookbook
 
-This is a personnal project. The aim is to have a free recipe book that have the features I want.
+This is a personnal project. The aim is to have a free recipe book that have the features I want. This is also the occasion to try the whole vibe coding thing while learning some things and effectively have an app I can use.
 
 A Qt6/QML app with C++ underneath, built with CMake. It runs on the Android emulator, on real Android phones, and on the Windows desktop for fast UI iteration.
 
