@@ -55,12 +55,37 @@
       "displayName": "Android armeabi-v7a (older 32-bit phones)",
       "inherits": "android-base",
       "toolchainFile": "$env{QT_VERSION_DIR}/android_armv7/lib/cmake/Qt6/qt.toolchain.cmake"
+    },
+    {
+      "name": "core-msvc",
+      "displayName": "Core only, MSVC (no Qt)",
+      "description": "Builds and tests the Qt-free core with Visual Studio 2022. Needs no Qt install.",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+      "cacheVariables": { "COOKBOOK_BUILD_APP": "OFF" }
+    },
+    {
+      "name": "core-linux",
+      "displayName": "Core only, Linux (no Qt)",
+      "description": "Builds and tests the Qt-free core with the system compiler (GCC 13 on Ubuntu 24.04).",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
+      "cacheVariables": { "COOKBOOK_BUILD_APP": "OFF", "CMAKE_BUILD_TYPE": "Debug" }
     }
   ],
   "buildPresets": [
     { "name": "desktop", "configurePreset": "desktop" },
     { "name": "android-x86_64", "configurePreset": "android-x86_64", "targets": [ "apk" ] },
     { "name": "android-arm64-v8a", "configurePreset": "android-arm64-v8a", "targets": [ "apk" ] },
-    { "name": "android-armeabi-v7a", "configurePreset": "android-armeabi-v7a", "targets": [ "apk" ] }
+    { "name": "android-armeabi-v7a", "configurePreset": "android-armeabi-v7a", "targets": [ "apk" ] },
+    { "name": "core-msvc", "configurePreset": "core-msvc", "configuration": "Debug" },
+    { "name": "core-linux", "configurePreset": "core-linux" }
+  ],
+  "testPresets": [
+    { "name": "desktop", "configurePreset": "desktop", "output": { "outputOnFailure": true } },
+    { "name": "core-msvc", "configurePreset": "core-msvc", "configuration": "Debug", "output": { "outputOnFailure": true } },
+    { "name": "core-linux", "configurePreset": "core-linux", "output": { "outputOnFailure": true } }
   ]
 }

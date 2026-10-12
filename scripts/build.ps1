@@ -9,17 +9,29 @@
 .EXAMPLE
     .\scripts\build.ps1 desktop -Fresh
     Wipes the CMake cache and rebuilds the Windows desktop version.
+
+.EXAMPLE
+    .\scripts\build.ps1 desktop -Test
+    Builds the desktop version and runs the unit tests.
+
+.EXAMPLE
+    .\scripts\build.ps1 core-msvc -Test
+    Builds and tests only the Qt-free core, with MSVC.
 #>
 param(
     [Parameter(Mandatory, Position = 0)]
-    [ValidateSet('desktop', 'android-x86_64', 'android-arm64-v8a', 'android-armeabi-v7a')]
+    [ValidateSet('desktop', 'android-x86_64', 'android-arm64-v8a', 'android-armeabi-v7a', 'core-msvc')]
     [string]$Preset,
 
     # Re-run CMake configuration from scratch.
-    [switch]$Fresh
+    [switch]$Fresh,
+
+    # Run the unit tests after building (desktop builds only).
+    [switch]$Test
 )
 
 $ErrorActionPreference = 'Stop'
+if ($Test -and $Preset -like 'android-*') { throw 'Tests run on desktop builds only: use -Test with desktop or core-msvc.' }
 . "$PSScriptRoot\env.ps1"
 
 $root = Split-Path $PSScriptRoot
@@ -40,6 +52,11 @@ try {
 
     cmake --build --preset $Preset
     if ($LASTEXITCODE) { throw "Build failed for preset '$Preset'." }
+
+    if ($Test) {
+        ctest --preset $Preset
+        if ($LASTEXITCODE) { throw "Tests failed for preset '$Preset'." }
+    }
 } finally {
     Pop-Location
 }

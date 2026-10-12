@@ -1,0 +1,5 @@
+BasedOnStyle: Mozilla
+FixNamespaceComments: false
+AlwaysBreakAfterDefinitionReturnType: None
+BreakAfterReturnType: Automatic
+InsertBraces: true

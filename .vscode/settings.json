@@ -1,0 +1,6 @@
+{
+    // IntelliSense uses the desktop build's real flags (MinGW, C++23, Qt include paths).
+    // Without this it falls back to cl.exe at C++14, where std::chrono::sys_time & co. don't exist.
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/desktop/compile_commands.json",
+    "C_Cpp.default.cppStandard": "c++23"
+}

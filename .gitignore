@@ -11,6 +11,11 @@ scripts/local.ps1
 .cache/
 compile_commands.json
 
+# Databases are never committed; tools/pull-db.sh copies the device's into scratch/
+*.db
+*.db-journal
+/scratch/
+
 # Signing keys must never be committed
 *.jks
 *.keystore

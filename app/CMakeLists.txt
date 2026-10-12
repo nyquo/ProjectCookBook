@@ -6,16 +6,21 @@ qt_add_qml_module(appProjectCookbook
     URI ProjectCookbook
     QML_FILES
         Main.qml
+        AislesScreen.qml
     SOURCES
-        appinfo.h appinfo.cpp
+        AisleListModel.hpp AisleListModel.cpp
+        appBackend.hpp appBackend.cpp
+        AppInfo.hpp AppInfo.cpp
 )
+
+cookbook_set_warnings(appProjectCookbook)
 
 target_compile_definitions(appProjectCookbook PRIVATE
     APP_DISPLAY_NAME="${APP_DISPLAY_NAME}"
     APP_VERSION="${PROJECT_VERSION}"
 )
 
-target_link_libraries(appProjectCookbook PRIVATE Qt6::Quick)
+target_link_libraries(appProjectCookbook PRIVATE core Qt6::Quick)
 
 set_target_properties(appProjectCookbook PROPERTIES
     QT_ANDROID_PACKAGE_SOURCE_DIR "${PROJECT_SOURCE_DIR}/android"

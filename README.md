@@ -66,9 +66,21 @@ Use an AVD with an **x86_64** system image. The scripts boot it with `-gpu auto`
 .\scripts\build.ps1 android-x86_64
 .\scripts\build.ps1 desktop
 .\scripts\build.ps1 desktop -Fresh        # wipe the CMake cache first
+.\scripts\build.ps1 desktop -Test         # build, then run the unit tests
+.\scripts\build.ps1 core-msvc -Test       # build and test only the Qt-free core, with MSVC
 ```
 
 Output goes to `build/<preset>/`. Under the hood, each script runs `cmake --preset <preset>` followed by `cmake --build --preset <preset>`.
+
+## Look inside the database
+
+From Git Bash, with a debug build running on the emulator or phone:
+
+```bash
+tools/pull-db.sh             # add an adb serial if several devices are connected
+```
+
+It copies the app's database to `scratch/data.db` (git-ignored); open that file with VS Code's *SQLite Viewer* extension. The desktop build keeps its database in `%APPDATA%\appProjectCookbook\data.db`. The schema is described in [docs/schema.md](docs/schema.md).
 
 ## Using an IDE
 
@@ -81,4 +93,6 @@ Output goes to `build/<preset>/`. Under the hood, each script runs `cmake --pres
 ```
 
 To set them for the current terminal only, run `. .\scripts\env.ps1`.
+
+VS Code's C/C++ IntelliSense reads `build/desktop/compile_commands.json` (see `.vscode/settings.json`), so configure the desktop build once with `.\scripts\build.ps1 desktop`.
 
