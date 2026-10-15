@@ -99,9 +99,16 @@ inline std::vector<core::Timestamp> modifiedTimes(const core::AisleStore& store)
   return result;
 }
 
-// Loading also checks that live positions are exactly 0..n-1.
+// Also checks that live positions are exactly 0..n-1, which loading would
+// otherwise repair.
 inline bool reloadMatches(core::Database& db, const core::AisleStore& store)
 {
+  std::int64_t expected = 0;
+  for (const AisleRow& row : aisleRows(db)) {
+    if (!row.deleted && row.position != expected++) {
+      return false;
+    }
+  }
   const core::AisleStore reloaded(db, core::systemNow);
   return reloaded.aisles() == store.aisles();
 }
@@ -139,12 +146,12 @@ public:
   }
   ~RecordingObserver() { m_store.removeObserver(*this); }
 
-  void aisleAboutToChange(const core::AisleChange& change) override
+  void aisleAboutToChange(const core::AisleChange& change) noexcept override
   {
     notifications.push_back(
       { Notification::AboutToChange, change, m_store.aisles().size() });
   }
-  void aisleChanged(const core::AisleChange& change) override
+  void aisleChanged(const core::AisleChange& change) noexcept override
   {
     notifications.push_back(
       { Notification::Changed, change, m_store.aisles().size() });

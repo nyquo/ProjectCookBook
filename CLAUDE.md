@@ -24,7 +24,7 @@ Personal Android recipe app: Qt 6.12 / QML + C++23, CMake. Build, run and device
 - Errors:
   - user-correctable validation → `std::expected<T, XxxError>`: codes, never strings;
   - broken database → `core::DatabaseError`; models catch it and return `StorageFailed`;
-  - programming errors (unknown id, bad index, a change from inside a notification) → `std::logic_error` subclasses.
+  - programming errors (unknown id, bad index, a change from inside a notification) → `std::logic_error` subclasses, thrown before anything changes; models catch them (stale input from QML) and return `InvalidRequest`.
 - All database work is synchronous on the main thread; the comment on `core::Backend` says what changes if that stops being true.
 
 ## Database conventions

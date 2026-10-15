@@ -24,7 +24,7 @@ User-defined aisles that group the shopping list. Created by `001_catalog.sql`, 
 
 **Color**: `core::AisleColor`, stored as its TEXT name. The CHECK constraint lists the same values.
 
-**Position**: live aisles always have positions 0..n-1, without gaps. There's deliberately no unique index on `position`: SQLite checks UNIQUE row by row, so shifting several positions in one UPDATE would collide halfway.
+**Position**: live aisles always have positions 0..n-1, without gaps. If a gap or a duplicate ever reaches the database, loading renumbers the live aisles in order (ties by id) and updates `modified_at` on the renumbered rows. There's deliberately no unique index on `position`: SQLite checks UNIQUE row by row, so shifting several positions in one UPDATE would collide halfway.
 
 **Operations**
 

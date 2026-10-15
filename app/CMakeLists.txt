@@ -7,6 +7,7 @@ qt_add_qml_module(appProjectCookbook
     QML_FILES
         Main.qml
         AislesScreen.qml
+        StartupError.qml
     SOURCES
         AisleListModel.hpp AisleListModel.cpp
         appBackend.hpp appBackend.cpp

@@ -25,13 +25,14 @@ int main(int argc, char* argv[])
 
   // Declared before the engine, so it outlives every model QML creates.
   std::optional<core::Backend> backend;
+  QString startupError;
   try {
     backend.emplace(databasePath());
+    app::setBackend(*backend);
   } catch (const core::DatabaseError& error) {
     qCritical("Can't open the database: %s", error.what());
-    return EXIT_FAILURE;
+    startupError = QString::fromUtf8(error.what());
   }
-  app::setBackend(*backend);
 
   QQmlApplicationEngine engine;
   QObject::connect(
@@ -40,7 +41,13 @@ int main(int argc, char* argv[])
     &app,
     [] { QCoreApplication::exit(EXIT_FAILURE); },
     Qt::QueuedConnection);
-  engine.loadFromModule("ProjectCookbook", "Main");
+  if (backend) {
+    engine.loadFromModule("ProjectCookbook", "Main");
+  } else {
+    // Without a window, the app would just vanish on Android.
+    engine.setInitialProperties({ { "details", startupError } });
+    engine.loadFromModule("ProjectCookbook", "StartupError");
+  }
 
   return QGuiApplication::exec();
 }

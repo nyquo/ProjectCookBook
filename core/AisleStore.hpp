@@ -59,12 +59,14 @@ using AisleChange =
   std::variant<AisleInserted, AisleRemoved, AisleMoved, AisleUpdated>;
 
 // Called before memory changes (the database has already committed) and after:
-// during aisleAboutToChange(), aisles() still holds the old list.
+// during aisleAboutToChange(), aisles() still holds the old list. An observer
+// registered during aisleAboutToChange() gets both calls; one registered during
+// aisleChanged() gets neither.
 class AisleObserver
 {
 public:
-  virtual void aisleAboutToChange(const AisleChange& change) = 0;
-  virtual void aisleChanged(const AisleChange& change) = 0;
+  virtual void aisleAboutToChange(const AisleChange& change) noexcept = 0;
+  virtual void aisleChanged(const AisleChange& change) noexcept = 0;
 
 protected:
   ~AisleObserver() = default;
@@ -73,8 +75,8 @@ protected:
 // Live aisles in position order, held in memory and written through to SQLite.
 // A change is validated, committed, then applied to memory and reported to
 // observers; if the write throws, memory and observers see nothing. Programming
-// errors throw std::logic_error subclasses: unknown id, index out of range, or
-// a change requested from inside a notification.
+// errors throw std::logic_error subclasses before anything changes: unknown id,
+// index out of range, or a change requested from inside a notification.
 class AisleStore
 {
 public:
@@ -114,9 +116,7 @@ private:
   void setModifiedAt(int first, int last, Timestamp time);
 
   template<typename Mutation>
-  void apply(const AisleChange& change, Mutation mutate);
-  void notify(void (AisleObserver::*method)(const AisleChange&),
-              const AisleChange& change);
+  void apply(const AisleChange& change, Mutation mutate) noexcept;
 
   Database& m_db;
   Clock m_clock;

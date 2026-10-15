@@ -4,6 +4,7 @@
 #include <doctest/doctest.h>
 #include <sqlite3.h>
 
+#include <optional>
 #include <stdexcept>
 
 using core::AisleColor;
@@ -48,6 +49,22 @@ TEST_CASE_FIXTURE(Fixture, "Loading reads the live aisles in position order")
   CHECK(store.aisles()[1].color == AisleColor::Butter);
   CHECK(store.aisles()[3].color == AisleColor::Sky);
   CHECK(store.aisles()[0].modifiedAt == test::seedTime);
+}
+
+TEST_CASE_FIXTURE(Fixture,
+                  "Loading renumbers gaps and duplicates in live positions")
+{
+  db.exec("UPDATE aisle SET position = 5 WHERE name = 'Produce';"
+          "UPDATE aisle SET position = 1 WHERE name = 'Meat & fish'");
+
+  const core::AisleStore reloaded(db, clock.function());
+
+  // Dairy & eggs and Meat & fish are both at 1: ties keep id order.
+  CHECK(test::names(reloaded) ==
+        Names{ "Dairy & eggs", "Meat & fish", "Pantry", "Produce" });
+  CHECK(test::modifiedTimes(reloaded) ==
+        std::vector{ clock.now, test::seedTime, clock.now, clock.now });
+  CHECK(test::reloadMatches(db, reloaded));
 }
 
 TEST_CASE_FIXTURE(Fixture, "create appends a trimmed aisle")
@@ -333,12 +350,12 @@ TEST_CASE_FIXTURE(Fixture, "An observer can unregister while being notified")
       : store(store)
     {
     }
-    void aisleAboutToChange(const core::AisleChange&) override
+    void aisleAboutToChange(const core::AisleChange&) noexcept override
     {
       ++calls;
       store.removeObserver(*this);
     }
-    void aisleChanged(const core::AisleChange&) override { ++calls; }
+    void aisleChanged(const core::AisleChange&) noexcept override { ++calls; }
 
     core::AisleStore& store;
     int calls = 0;
@@ -352,6 +369,43 @@ TEST_CASE_FIXTURE(Fixture, "An observer can unregister while being notified")
   CHECK(observer.notifications.size() == 4);
 }
 
+TEST_CASE_FIXTURE(
+  Fixture,
+  "An observer registered while notified gets both calls or neither")
+{
+  // Registered during aisleAboutToChange(), it saw the old list; during
+  // aisleChanged(), the new one.
+  struct JoiningObserver final : core::AisleObserver
+  {
+    explicit JoiningObserver(core::AisleStore& store)
+      : store(store)
+    {
+    }
+    void aisleAboutToChange(const core::AisleChange&) noexcept override
+    {
+      early.emplace(store);
+    }
+    void aisleChanged(const core::AisleChange&) noexcept override
+    {
+      late.emplace(store);
+    }
+
+    core::AisleStore& store;
+    std::optional<test::RecordingObserver> early;
+    std::optional<test::RecordingObserver> late;
+  } joining(store);
+  store.addObserver(joining);
+
+  REQUIRE(store.create("Bakery", AisleColor::Mint));
+
+  REQUIRE(joining.early);
+  REQUIRE(joining.late);
+  CHECK(joining.early->notifications ==
+        test::notificationsFor(core::AisleInserted{ 4 }, 4, 5));
+  CHECK(joining.late->notifications.empty());
+  store.removeObserver(joining);
+}
+
 TEST_CASE_FIXTURE(Fixture,
                   "Changing the store from inside a notification is refused")
 {
@@ -361,11 +415,11 @@ TEST_CASE_FIXTURE(Fixture,
       : store(store)
     {
     }
-    void aisleAboutToChange(const core::AisleChange&) override
+    void aisleAboutToChange(const core::AisleChange&) noexcept override
     {
       CHECK_THROWS_AS(store.move(0, 1), std::logic_error);
     }
-    void aisleChanged(const core::AisleChange&) override
+    void aisleChanged(const core::AisleChange&) noexcept override
     {
       CHECK_THROWS_AS((void)store.create("Bakery", AisleColor::Mint),
                       std::logic_error);

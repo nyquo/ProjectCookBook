@@ -7,6 +7,7 @@
 #include <expected>
 #include <iterator>
 #include <optional>
+#include <stdexcept>
 #include <variant>
 
 static_assert(std::size(core::allAisleColors) == 4,
@@ -49,7 +50,9 @@ static AisleListModel::Error toError(
 }
 
 // Exceptions can't cross into QML. A failed write leaves memory unchanged, so
-// the UI stays consistent and only has to report that saving failed.
+// the UI stays consistent and only has to report that saving failed. The store
+// throws logic errors before changing anything, e.g. for an id QML kept after
+// it went stale.
 static AisleListModel::Error guarded(auto&& action)
 {
   try {
@@ -57,6 +60,9 @@ static AisleListModel::Error guarded(auto&& action)
   } catch (const core::DatabaseError& error) {
     qCritical("Saving aisles failed: %s", error.what());
     return AisleListModel::Error::StorageFailed;
+  } catch (const std::logic_error& error) {
+    qWarning("AisleListModel: %s", error.what());
+    return AisleListModel::Error::InvalidRequest;
   }
 }
 
@@ -113,7 +119,7 @@ AisleListModel::Error AisleListModel::create(const QString& name, Color color)
 {
   const auto coreColor = toCore(color);
   if (!coreColor) {
-    return Error::NoError;
+    return Error::InvalidRequest;
   }
   return guarded(
     [&] { return toError(m_store.create(name.toStdString(), *coreColor)); });
@@ -122,7 +128,7 @@ AisleListModel::Error AisleListModel::create(const QString& name, Color color)
 AisleListModel::Error AisleListModel::rename(int row, const QString& name)
 {
   if (!isValidRow(row)) {
-    return Error::NoError;
+    return Error::InvalidRequest;
   }
   return guarded(
     [&] { return toError(m_store.rename(idAt(row), name.toStdString())); });
@@ -132,7 +138,7 @@ AisleListModel::Error AisleListModel::setColor(int row, Color color)
 {
   const auto coreColor = toCore(color);
   if (!isValidRow(row) || !coreColor) {
-    return Error::NoError;
+    return Error::InvalidRequest;
   }
   return guarded([&] {
     m_store.setColor(idAt(row), *coreColor);
@@ -143,7 +149,7 @@ AisleListModel::Error AisleListModel::setColor(int row, Color color)
 AisleListModel::Error AisleListModel::move(int from, int to)
 {
   if (!isValidRow(from) || !isValidRow(to)) {
-    return Error::NoError;
+    return Error::InvalidRequest;
   }
   return guarded([&] {
     m_store.move(from, to);
@@ -154,7 +160,7 @@ AisleListModel::Error AisleListModel::move(int from, int to)
 AisleListModel::Error AisleListModel::remove(int row)
 {
   if (!isValidRow(row)) {
-    return Error::NoError;
+    return Error::InvalidRequest;
   }
   return guarded([&] {
     m_store.remove(idAt(row));
@@ -168,7 +174,8 @@ AisleListModel::Error AisleListModel::restore(const QString& aisleId)
     [&] { return toError(m_store.restore(aisleId.toStdString())); });
 }
 
-void AisleListModel::aisleAboutToChange(const core::AisleChange& change)
+void AisleListModel::aisleAboutToChange(
+  const core::AisleChange& change) noexcept
 {
   const Overloaded begin{
     [this](const core::AisleInserted& c) {
@@ -186,7 +193,7 @@ void AisleListModel::aisleAboutToChange(const core::AisleChange& change)
   std::visit(begin, change);
 }
 
-void AisleListModel::aisleChanged(const core::AisleChange& change)
+void AisleListModel::aisleChanged(const core::AisleChange& change) noexcept
 {
   const Overloaded end{
     [this](const core::AisleInserted&) { endInsertRows(); },

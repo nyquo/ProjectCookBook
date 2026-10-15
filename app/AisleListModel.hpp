@@ -37,7 +37,8 @@ public:
     NoError,
     EmptyName,
     DuplicateName,
-    StorageFailed
+    StorageFailed,
+    InvalidRequest // stale row or id, invalid color...: nothing changed
   };
   Q_ENUM(Error)
 
@@ -57,8 +58,8 @@ public:
   Q_INVOKABLE Error restore(const QString& aisleId);
 
 private:
-  void aisleAboutToChange(const core::AisleChange& change) override;
-  void aisleChanged(const core::AisleChange& change) override;
+  void aisleAboutToChange(const core::AisleChange& change) noexcept override;
+  void aisleChanged(const core::AisleChange& change) noexcept override;
 
   bool isValidRow(int row) const;
   std::string idAt(int row) const;

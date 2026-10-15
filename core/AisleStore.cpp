@@ -50,19 +50,41 @@ AisleStore::AisleStore(Database& db, Clock clock)
   : m_db(db)
   , m_clock(std::move(clock))
 {
-  Statement select =
-    m_db.prepare("SELECT id, name, color, modified_at, position FROM aisle "
-                 "WHERE deleted = 0 ORDER BY position");
-  while (select.step()) {
-    // Every shift below relies on live positions being exactly 0..n-1.
-    if (select.columnInt64(4) != count()) {
-      throw DatabaseError(SQLITE_CORRUPT,
-                          "live aisle positions are not 0..n-1");
+  // Every shift below relies on live positions being exactly 0..n-1. A gap or
+  // a duplicate (a bug, a bad migration) is renumbered rather than refusing to
+  // start, which on a phone would lock the user out of their data.
+  std::vector<int> misplaced;
+  {
+    Statement select =
+      m_db.prepare("SELECT id, name, color, modified_at, position FROM aisle "
+                   "WHERE deleted = 0 ORDER BY position, id");
+    while (select.step()) {
+      if (select.columnInt64(4) != count()) {
+        misplaced.push_back(count());
+      }
+      m_aisles.push_back({ select.columnText(0),
+                           select.columnText(1),
+                           colorColumn(select, 2),
+                           fromMillis(select.columnInt64(3)) });
     }
-    m_aisles.push_back({ select.columnText(0),
-                         select.columnText(1),
-                         colorColumn(select, 2),
-                         fromMillis(select.columnInt64(3)) });
+  }
+  if (misplaced.empty()) {
+    return;
+  }
+
+  const Timestamp now = m_clock();
+  Transaction transaction(m_db);
+  for (int index : misplaced) {
+    m_db
+      .prepare("UPDATE aisle SET position = ?2, modified_at = ?3 WHERE id = ?1")
+      .bind(1, m_aisles[index].id)
+      .bind(2, index)
+      .bind(3, toMillis(now))
+      .run();
+  }
+  transaction.commit();
+  for (int index : misplaced) {
+    m_aisles[index].modifiedAt = now;
   }
 }
 
@@ -315,26 +337,35 @@ void AisleStore::setModifiedAt(int first, int last, Timestamp time)
   }
 }
 
+// noexcept: the write has committed, so if memory or an observer can't follow,
+// terminating beats running on, out of sync; the next launch reloads the
+// database.
 template<typename Mutation>
-void AisleStore::apply(const AisleChange& change, Mutation mutate)
+void AisleStore::apply(const AisleChange& change, Mutation mutate) noexcept
 {
   m_notifying = true;
-  notify(&AisleObserver::aisleAboutToChange, change);
+  // Observers may register or unregister others while notified. Each one
+  // registered by the end of this loop saw the old list, so it gets both calls.
+  std::vector<AisleObserver*> notified;
+  const auto nextToNotify = [&]() -> AisleObserver* {
+    for (AisleObserver* observer : m_observers) {
+      if (std::ranges::find(notified, observer) == notified.end()) {
+        return observer;
+      }
+    }
+    return nullptr;
+  };
+  while (AisleObserver* observer = nextToNotify()) {
+    notified.push_back(observer);
+    observer->aisleAboutToChange(change);
+  }
   mutate();
-  notify(&AisleObserver::aisleChanged, change);
-  m_notifying = false;
-}
-
-void AisleStore::notify(void (AisleObserver::*method)(const AisleChange&),
-                        const AisleChange& change)
-{
-  // A copy: an observer may unregister itself or another while notified.
-  const std::vector<AisleObserver*> observers = m_observers;
-  for (AisleObserver* observer : observers) {
+  for (AisleObserver* observer : notified) {
     if (std::ranges::find(m_observers, observer) != m_observers.end()) {
-      (observer->*method)(change);
+      observer->aisleChanged(change);
     }
   }
+  m_notifying = false;
 }
 
 }
