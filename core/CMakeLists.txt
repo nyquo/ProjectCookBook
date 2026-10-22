@@ -5,17 +5,20 @@ add_library(core STATIC
     clock.hpp
     Database.hpp Database.cpp
     migrations.hpp migrations.cpp
+    TagColor.hpp
+    TagColorStore.hpp TagColorStore.cpp
+    ThemedColors.hpp ThemedColors.cpp
     UuidV7Generator.hpp UuidV7Generator.cpp
 )
 
-# Includes read "core/<file>.hpp".
+# Includes read "core/<file>.hpp"
 target_include_directories(core PUBLIC "${PROJECT_SOURCE_DIR}")
 target_link_libraries(core PRIVATE sqlite)
-# On Android it ends up inside the app's shared library.
+# On Android it ends up inside the app's shared library
 set_target_properties(core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 cookbook_set_warnings(core)
 
-# CONFIGURE_DEPENDS: adding or removing a migration file re-runs CMake.
+# CONFIGURE_DEPENDS: adding or removing a migration file re-runs CMake
 file(GLOB migrationFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/schema/*.sql")
 set(migrationsHeader "${CMAKE_CURRENT_BINARY_DIR}/generated/migrationsSql.hpp")
 add_custom_command(

@@ -1,8 +1,8 @@
 import QtQuick
-import QtQuick.Controls.Material
 import QtQuick.Layouts
+import Plating
 
-// Loaded instead of Main when the database can't be opened.
+// Loaded instead of Main when the database can't be opened
 ApplicationWindow {
     id: window
 
@@ -13,8 +13,7 @@ ApplicationWindow {
     visible: true
     title: AppInfo.name
 
-    Material.theme: Material.System
-    Material.accent: Material.DeepOrange
+    Plating.theme: DefaultDarkTheme
 
     ColumnLayout {
         anchors.fill: parent

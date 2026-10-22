@@ -11,7 +11,7 @@
     .\scripts\emulator.ps1 -Avd Pixel_9_API_36
 #>
 param(
-    # AVD name; defaults to the first one found.
+    # AVD name; defaults to the first one found
     [string]$Avd,
 
     [int]$TimeoutMinutes = 5
@@ -31,7 +31,7 @@ if (-not (Get-RunningEmulator)) {
     }
     Write-Host "Booting emulator '$Avd'..."
     $emulatorExe = Join-Path $env:ANDROID_SDK_ROOT 'emulator\emulator.exe'
-    # Hidden only hides the emulator's console; its device window still opens.
+    # Hidden only hides the emulator's console; its device window still opens
     Start-Process -FilePath $emulatorExe -ArgumentList '-avd', $Avd, '-gpu', 'auto' -WindowStyle Hidden
 }
 

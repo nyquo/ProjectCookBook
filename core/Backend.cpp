@@ -12,7 +12,8 @@ static Database& migrated(Database& db)
 
 Backend::Backend(const std::filesystem::path& databasePath, Clock clock)
   : m_db(databasePath)
-  , m_aisles(migrated(m_db), std::move(clock))
+  , m_tagColors(migrated(m_db))
+  , m_aisles(m_db, std::move(clock))
 {
 }
 

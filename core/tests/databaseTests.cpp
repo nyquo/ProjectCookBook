@@ -20,7 +20,7 @@ TEST_CASE("Statements bind and read integers and UTF-8 text")
     .bind(1, std::int64_t{ 1 } << 40)
     .bind(2, "Épices & thé")
     .run();
-  // An empty string must be stored as '', not NULL.
+  // An empty string must be stored as '', not NULL
   db.prepare("INSERT INTO t (i, s) VALUES (?1, ?2)")
     .bind(1, true)
     .bind(2, std::string_view())
@@ -44,7 +44,7 @@ TEST_CASE("Failures throw DatabaseError with SQLite's code")
   CHECK(test::errorCode([&] { db.exec("SELEC 1"); }) == SQLITE_ERROR);
   CHECK(test::errorCode([&] { db.exec("INSERT INTO t VALUES (NULL)"); }) ==
         SQLITE_CONSTRAINT_NOTNULL);
-  // SQLITE_DQS=0: double quotes name a column, they never make a string.
+  // SQLITE_DQS=0: double quotes name a column, they never make a string
   CHECK(test::errorCode([&] { db.exec("SELECT \"text\""); }) == SQLITE_ERROR);
 }
 

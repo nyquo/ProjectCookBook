@@ -3,11 +3,10 @@
 #include "core/AisleStore.hpp"
 
 #include <QAbstractListModel>
+#include <QColor>
 #include <QtQml/qqmlregistration.h>
 
-#include <utility>
-
-// Created by QML, one per screen; follows the app's AisleStore.
+// Created by QML, one per screen; follows the app's AisleStore
 class AisleListModel
   : public QAbstractListModel
   , private core::AisleObserver
@@ -20,17 +19,12 @@ public:
   {
     AisleIdRole = Qt::UserRole + 1,
     NameRole,
-    ColorRole
+    // QML picks the pair with UiTheme.dark
+    FillRole,
+    InkRole,
+    DarkFillRole,
+    DarkInkRole
   };
-
-  enum class Color
-  {
-    Mint = std::to_underlying(core::AisleColor::Mint),
-    Butter = std::to_underlying(core::AisleColor::Butter),
-    Sky = std::to_underlying(core::AisleColor::Sky),
-    Peach = std::to_underlying(core::AisleColor::Peach),
-  };
-  Q_ENUM(Color)
 
   enum class Error
   {
@@ -38,7 +32,8 @@ public:
     EmptyName,
     DuplicateName,
     StorageFailed,
-    InvalidRequest // stale row or id, invalid color...: nothing changed
+    // Stale row or id, invalid or translucent color...: nothing changed
+    InvalidRequest
   };
   Q_ENUM(Error)
 
@@ -50,9 +45,18 @@ public:
   QVariant data(const QModelIndex& index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;
 
-  Q_INVOKABLE Error create(const QString& name, Color color);
+  // The aisle keeps its own copy of the colors, usually a tag color's
+  Q_INVOKABLE Error create(const QString& name,
+                           const QColor& fill,
+                           const QColor& ink,
+                           const QColor& darkFill,
+                           const QColor& darkInk);
   Q_INVOKABLE Error rename(int row, const QString& name);
-  Q_INVOKABLE Error setColor(int row, Color color);
+  Q_INVOKABLE Error setColors(int row,
+                              const QColor& fill,
+                              const QColor& ink,
+                              const QColor& darkFill,
+                              const QColor& darkInk);
   Q_INVOKABLE Error move(int from, int to);
   Q_INVOKABLE Error remove(int row);
   Q_INVOKABLE Error restore(const QString& aisleId);

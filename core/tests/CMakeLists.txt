@@ -5,10 +5,12 @@ add_executable(coreTests
     backendTests.cpp
     databaseTests.cpp
     migrationsTests.cpp
+    tagColorStoreTests.cpp
+    themedColorsTests.cpp
     uuidTests.cpp
 )
 
-# sqlite for its result-code constants only.
+# sqlite for its result-code constants only
 target_link_libraries(coreTests PRIVATE core sqlite doctest)
 cookbook_set_warnings(coreTests)
 

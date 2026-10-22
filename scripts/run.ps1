@@ -23,16 +23,16 @@ param(
     [ValidateSet('emulator', 'device', 'desktop')]
     [string]$Target,
 
-    # adb serial to use when several devices are connected (see "adb devices").
+    # adb serial to use when several devices are connected (see "adb devices")
     [string]$Serial,
 
-    # AVD to boot for the emulator target; defaults to the first one.
+    # AVD to boot for the emulator target; defaults to the first one
     [string]$Avd,
 
-    # Install and launch the last build without rebuilding.
+    # Install and launch the last build without rebuilding
     [switch]$NoBuild,
 
-    # Stream the app's logcat output after launching (Ctrl+C to stop).
+    # Stream the app's logcat output after launching (Ctrl+C to stop)
     [switch]$Logs
 )
 

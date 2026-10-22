@@ -22,7 +22,7 @@ trap 'rm -f "$part"' EXIT
 mkdir -p "$root/scratch"
 "$adb" ${1:+-s "$1"} exec-out run-as "$package" cat files/data.db > "$part"
 
-# run-as reports errors on stdout, so they end up in the file.
+# run-as reports errors on stdout, so they end up in the file
 if [[ $(head -c 15 "$part") != "SQLite format 3" ]]; then
   echo "Not a database: $(head -c 200 "$part")" >&2
   exit 1
