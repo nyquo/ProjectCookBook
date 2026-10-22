@@ -4,7 +4,7 @@
 #include <QString>
 #include <QtQml/qqmlregistration.h>
 
-// Read-only facts about the running app, for QML as the AppInfo singleton.
+// Read-only facts about the running app, for QML as the AppInfo singleton
 class AppInfo : public QObject
 {
   Q_OBJECT

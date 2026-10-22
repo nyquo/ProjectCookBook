@@ -2,6 +2,7 @@
 
 #include "core/AisleStore.hpp"
 #include "core/Database.hpp"
+#include "core/TagColorStore.hpp"
 #include "core/clock.hpp"
 
 #include <filesystem>
@@ -21,10 +22,13 @@ public:
   explicit Backend(const std::filesystem::path& databasePath,
                    Clock clock = systemNow);
 
+  TagColorStore& tagColors() { return m_tagColors; }
   AisleStore& aisles() { return m_aisles; }
 
 private:
   Database m_db;
+  // The first store migrates the database
+  TagColorStore m_tagColors;
   AisleStore m_aisles;
 };
 

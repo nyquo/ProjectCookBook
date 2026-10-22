@@ -5,13 +5,14 @@ Personal Android recipe app: Qt 6.12 / QML + C++23, CMake. Build, run and device
 ## Workflow
 
 - Work in phases and stop after each for review. Never commit: the user commits after reviewing.
-- Build and test: `.\scripts\build.ps1 desktop -Test` (MinGW: app + core tests) and `.\scripts\build.ps1 core-msvc -Test` (core only, MSVC, no Qt). Tests are never built for Android. Keep every build warning-free.
+- Build and test: `.\scripts\build.ps1 desktop -Test` (MinGW: app + core tests) and `.\scripts\build.ps1 core-msvc -Test` (core only, MSVC, no Qt). Tests are never built for Android. Only core has tests: QML isn't tested. Keep every build warning-free.
 - Format every C++ file you touch with `.clang-format` (Mozilla), using the clang-format bundled with VS Code's C/C++ extension: the user formats on save with it.
 
 ## Architecture
 
 - `core/`: static library, standard C++23, **no Qt** (no QString, QObject, QtSql, QJson, qrc). CMake fails if it links Qt. Third-party code: permissive licenses only, vendored in `third_party/`.
 - `app/`: the Qt/QML layer. Adapts core types to list models and builds every user-facing text (qsTr, QLocale). Qt: LGPL modules only.
+- `plating/`: static QML module `Plating`, the app's Qt Quick Controls style and design tokens (themes, metrics, typography, its OFL font). Never links or includes `core`; CMake fails if it links it. QML reads the theme through `readonly property UiTheme theme: Plating.theme as UiTheme`; color values only in `LightTheme.qml`/`DarkTheme.qml`, design px only in `UiMetrics.qml`/`UiTypography.qml`. See `plating/README.md`.
 - `core::Backend` owns the `Database` and every store. `main()` creates it before the QML engine and hands it to `app::setBackend()`.
 - One **store** per table (e.g. `core::AisleStore`):
   - loads the live rows into memory at startup; reads come from memory;
@@ -49,6 +50,7 @@ Personal Android recipe app: Qt 6.12 / QML + C++23, CMake. Build, run and device
 - File names: PascalCase, named after the class or struct the file holds (`AisleStore.hpp`, `Backend.cpp`); camelCase otherwise (`main.cpp`, `migrations.hpp`, `aisleStoreTests.cpp`). QML files are PascalCase, as QML requires.
 - `namespace a::b {`, with no closing `// namespace` comment. File-local helpers are `static` functions.
 - Comments only for why, contracts, or non-obvious facts; code that reads on its own gets none.
+- A comment that fits on one line doesn't end with a period. Comments that span several lines keep theirs.
 - The product spec is private and not in the repo: sources, docs and commit messages never cite it (feature ids, section numbers). State the fact itself.
 - Every own CMake target calls `cookbook_set_warnings(<target>)`.
 

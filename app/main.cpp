@@ -5,9 +5,14 @@
 #include <QDir>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQuickStyle>
 #include <QStandardPaths>
+#include <QtQml/QQmlExtensionPlugin>
 
 #include <optional>
+
+// Registers the static Plating module; otherwise the linker drops it
+Q_IMPORT_QML_PLUGIN(PlatingPlugin)
 
 static std::filesystem::path databasePath()
 {
@@ -23,7 +28,7 @@ int main(int argc, char* argv[])
   QGuiApplication::setApplicationDisplayName(QStringLiteral(APP_DISPLAY_NAME));
   QGuiApplication::setApplicationVersion(QStringLiteral(APP_VERSION));
 
-  // Declared before the engine, so it outlives every model QML creates.
+  // Declared before the engine, so it outlives every model QML creates
   std::optional<core::Backend> backend;
   QString startupError;
   try {
@@ -33,6 +38,10 @@ int main(int argc, char* argv[])
     qCritical("Can't open the database: %s", error.what());
     startupError = QString::fromUtf8(error.what());
   }
+
+  // Before any QML loads, so a stray `import QtQuick.Controls` gets Plating
+  // rather than Material, Android's default style.
+  QQuickStyle::setStyle(QStringLiteral("Plating"));
 
   QQmlApplicationEngine engine;
   QObject::connect(
@@ -44,7 +53,7 @@ int main(int argc, char* argv[])
   if (backend) {
     engine.loadFromModule("ProjectCookbook", "Main");
   } else {
-    // Without a window, the app would just vanish on Android.
+    // Without a window, the app would just vanish on Android
     engine.setInitialProperties({ { "details", startupError } });
     engine.loadFromModule("ProjectCookbook", "StartupError");
   }

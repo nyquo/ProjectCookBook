@@ -20,7 +20,7 @@ class DatabaseError : public std::runtime_error
 public:
   DatabaseError(int code, const std::string& message);
 
-  // SQLite extended result code, e.g. SQLITE_CONSTRAINT_UNIQUE.
+  // SQLite extended result code, e.g. SQLITE_CONSTRAINT_UNIQUE
   int code() const noexcept { return m_code; }
 
 private:
@@ -29,16 +29,16 @@ private:
 
 class Statement;
 
-// Not movable: stores keep a reference to it.
+// Not movable: stores keep a reference to it
 class Database
 {
 public:
-  // ":memory:" opens a private in-memory database.
+  // ":memory:" opens a private in-memory database
   explicit Database(const std::filesystem::path& path);
   Database(const Database&) = delete;
   Database& operator=(const Database&) = delete;
 
-  // For constant SQL without parameters; may hold several statements.
+  // For constant SQL without parameters; may hold several statements
   void exec(std::string_view sql);
 
   Statement prepare(std::string_view sql);
@@ -51,7 +51,7 @@ private:
   std::unique_ptr<sqlite3, Closer> m_db;
 };
 
-// Parameters are numbered from 1, as in "?1".
+// Parameters are numbered from 1, as in "?1"
 class Statement
 {
 public:
@@ -64,9 +64,9 @@ public:
   }
   Statement& bind(int index, std::string_view value);
 
-  // True while there is a row to read.
+  // True while there is a row to read
   bool step();
-  // For statements that return no rows.
+  // For statements that return no rows
   void run();
 
   std::int64_t columnInt64(int index) const;
@@ -86,7 +86,7 @@ private:
   std::unique_ptr<sqlite3_stmt, Finalizer> m_statement;
 };
 
-// Rolls back on destruction unless commit() succeeded.
+// Rolls back on destruction unless commit() succeeded
 class Transaction
 {
 public:

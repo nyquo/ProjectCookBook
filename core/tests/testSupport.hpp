@@ -23,6 +23,25 @@ inline const std::vector<std::string> seedNames{ "Produce",
 inline const core::Timestamp seedTime =
   core::fromMillis(1791504000000); // 2026-10-09 00:00 UTC
 
+// The seed colors of Butter and Sky
+inline const core::ThemedColors butter{ { 0xf6, 0xe9, 0xc2 },
+                                        { 0x5e, 0x46, 0x00 },
+                                        { 0x34, 0x2d, 0x16 },
+                                        { 0xed, 0xd6, 0x8a } };
+inline const core::ThemedColors sky{ { 0xdc, 0xe6, 0xf7 },
+                                     { 0x1f, 0x3e, 0x73 },
+                                     { 0x1c, 0x27, 0x3d },
+                                     { 0xaf, 0xc8, 0xf5 } };
+// Two sets of valid colors, unlike any seed's and unlike each other
+inline const core::ThemedColors someColors{ { 0x01, 0x23, 0x45 },
+                                            { 0x67, 0x89, 0xab },
+                                            { 0xcd, 0xef, 0x00 },
+                                            { 0xff, 0x10, 0x0a } };
+inline const core::ThemedColors otherColors{ { 0x00, 0x00, 0x00 },
+                                             { 0xff, 0xff, 0xff },
+                                             { 0x80, 0x80, 0x80 },
+                                             { 0x7f, 0x7f, 0x7f } };
+
 struct FakeClock
 {
   core::Timestamp now =
@@ -40,7 +59,7 @@ inline core::Database& migrated(core::Database& db)
   return db;
 }
 
-// SQLITE_OK when `write` doesn't throw.
+// SQLITE_OK when `write` doesn't throw
 inline int errorCode(auto&& write)
 {
   try {
@@ -51,34 +70,66 @@ inline int errorCode(auto&& write)
   return SQLITE_OK;
 }
 
-struct AisleRow
+// The four color columns, as stored
+struct ColorTexts
+{
+  std::string fill;
+  std::string ink;
+  std::string darkFill;
+  std::string darkInk;
+
+  bool operator==(const ColorTexts&) const = default;
+};
+
+inline ColorTexts colorTexts(const core::Statement& statement, int first)
+{
+  return { statement.columnText(first),
+           statement.columnText(first + 1),
+           statement.columnText(first + 2),
+           statement.columnText(first + 3) };
+}
+
+// A row of the aisle or the tag_color table
+struct Row
 {
   std::string id;
   std::string name;
-  std::string color;
+  ColorTexts colors;
   std::int64_t position;
   std::int64_t modifiedAt;
   bool deleted;
 
-  bool operator==(const AisleRow&) const = default;
+  bool operator==(const Row&) const = default;
 };
 
-// Live rows first, then deleted ones, each in position order.
-inline std::vector<AisleRow> aisleRows(core::Database& db)
+inline std::vector<Row> readRows(core::Statement select)
 {
-  core::Statement select =
-    db.prepare("SELECT id, name, color, position, modified_at, deleted "
-               "FROM aisle ORDER BY deleted, position");
-  std::vector<AisleRow> rows;
+  std::vector<Row> result;
   while (select.step()) {
-    rows.push_back({ select.columnText(0),
-                     select.columnText(1),
-                     select.columnText(2),
-                     select.columnInt64(3),
-                     select.columnInt64(4),
-                     select.columnInt64(5) != 0 });
+    result.push_back({ select.columnText(0),
+                       select.columnText(1),
+                       colorTexts(select, 2),
+                       select.columnInt64(6),
+                       select.columnInt64(7),
+                       select.columnInt64(8) != 0 });
   }
-  return rows;
+  return result;
+}
+
+// Live rows first, then deleted ones, each in position order
+inline std::vector<Row> aisleRows(core::Database& db)
+{
+  return readRows(db.prepare("SELECT id, name, fill, ink, dark_fill, dark_ink, "
+                             "position, modified_at, deleted "
+                             "FROM aisle ORDER BY deleted, position"));
+}
+
+// Same order as aisleRows()
+inline std::vector<Row> tagColorRows(core::Database& db)
+{
+  return readRows(db.prepare("SELECT id, name, fill, ink, dark_fill, dark_ink, "
+                             "position, modified_at, deleted "
+                             "FROM tag_color ORDER BY deleted, position"));
 }
 
 inline std::vector<std::string> names(const core::AisleStore& store)
@@ -104,7 +155,7 @@ inline std::vector<core::Timestamp> modifiedTimes(const core::AisleStore& store)
 inline bool reloadMatches(core::Database& db, const core::AisleStore& store)
 {
   std::int64_t expected = 0;
-  for (const AisleRow& row : aisleRows(db)) {
+  for (const Row& row : aisleRows(db)) {
     if (!row.deleted && row.position != expected++) {
       return false;
     }
@@ -163,7 +214,7 @@ private:
   core::AisleStore& m_store;
 };
 
-// Deletes the file and its journal on destruction.
+// Deletes the file and its journal on destruction
 class TempDatabasePath
 {
 public:

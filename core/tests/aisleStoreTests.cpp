@@ -7,7 +7,6 @@
 #include <optional>
 #include <stdexcept>
 
-using core::AisleColor;
 using core::AisleError;
 using namespace std::chrono_literals;
 
@@ -28,7 +27,7 @@ struct Fixture
   }
 };
 
-// `write` must fail, because of a trigger the test installed.
+// `write` must fail, because of a trigger the test installed
 void checkFailedWriteChangesNothing(Fixture& f, auto&& write)
 {
   const auto aislesBefore = f.store.aisles();
@@ -46,8 +45,8 @@ void checkFailedWriteChangesNothing(Fixture& f, auto&& write)
 TEST_CASE_FIXTURE(Fixture, "Loading reads the live aisles in position order")
 {
   CHECK(test::names(store) == test::seedNames);
-  CHECK(store.aisles()[1].color == AisleColor::Butter);
-  CHECK(store.aisles()[3].color == AisleColor::Sky);
+  CHECK(store.aisles()[1].colors == test::butter);
+  CHECK(store.aisles()[3].colors == test::sky);
   CHECK(store.aisles()[0].modifiedAt == test::seedTime);
 }
 
@@ -59,7 +58,7 @@ TEST_CASE_FIXTURE(Fixture,
 
   const core::AisleStore reloaded(db, clock.function());
 
-  // Dairy & eggs and Meat & fish are both at 1: ties keep id order.
+  // Dairy & eggs and Meat & fish are both at 1: ties keep id order
   CHECK(test::names(reloaded) ==
         Names{ "Dairy & eggs", "Meat & fish", "Pantry", "Produce" });
   CHECK(test::modifiedTimes(reloaded) ==
@@ -69,12 +68,12 @@ TEST_CASE_FIXTURE(Fixture,
 
 TEST_CASE_FIXTURE(Fixture, "create appends a trimmed aisle")
 {
-  const auto id = store.create("  Bakery\t", AisleColor::Peach);
+  const auto id = store.create("  Bakery\t", test::someColors);
 
   REQUIRE(id);
   CHECK((*id)[14] == '7');
   CHECK(store.aisles().back() ==
-        core::Aisle{ *id, "Bakery", AisleColor::Peach, clock.now });
+        core::Aisle{ *id, "Bakery", test::someColors, clock.now });
   CHECK(observer.notifications ==
         test::notificationsFor(core::AisleInserted{ 4 }, 4, 5));
   CHECK(test::reloadMatches(db, store));
@@ -84,13 +83,13 @@ TEST_CASE_FIXTURE(Fixture, "create rejects blank and duplicate names")
 {
   const auto rowsBefore = test::aisleRows(db);
 
-  CHECK(store.create("", AisleColor::Mint) ==
+  CHECK(store.create("", test::someColors) ==
         std::unexpected(AisleError::EmptyName));
-  CHECK(store.create(" \t\n", AisleColor::Mint) ==
+  CHECK(store.create(" \t\n", test::someColors) ==
         std::unexpected(AisleError::EmptyName));
-  CHECK(store.create("produce", AisleColor::Mint) ==
+  CHECK(store.create("produce", test::someColors) ==
         std::unexpected(AisleError::DuplicateName));
-  CHECK(store.create(" PANTRY ", AisleColor::Mint) ==
+  CHECK(store.create(" PANTRY ", test::someColors) ==
         std::unexpected(AisleError::DuplicateName));
 
   CHECK(test::names(store) == test::seedNames);
@@ -102,16 +101,16 @@ TEST_CASE_FIXTURE(
   Fixture,
   "Names compare ignoring case for ASCII letters only, like the index")
 {
-  REQUIRE(store.create("Épicerie", AisleColor::Mint));
-  CHECK(store.create("épicerie", AisleColor::Mint)); // É and é differ
-  CHECK(store.create("ÉPICERIE", AisleColor::Mint) ==
+  REQUIRE(store.create("Épicerie", test::someColors));
+  CHECK(store.create("épicerie", test::someColors)); // É and é differ
+  CHECK(store.create("ÉPICERIE", test::someColors) ==
         std::unexpected(AisleError::DuplicateName));
 }
 
 TEST_CASE_FIXTURE(Fixture, "A deleted aisle's name can be reused")
 {
   store.remove(idAt(3));
-  CHECK(store.create("Pantry", AisleColor::Sky));
+  CHECK(store.create("Pantry", test::someColors));
 }
 
 TEST_CASE_FIXTURE(Fixture, "rename trims and updates the name")
@@ -151,28 +150,32 @@ TEST_CASE_FIXTURE(Fixture, "rename rejects blank and duplicate names")
   CHECK(observer.notifications.empty());
 }
 
-TEST_CASE_FIXTURE(Fixture, "setColor stores the color as text")
+TEST_CASE_FIXTURE(Fixture, "setColors stores the colors as text")
 {
-  store.setColor(idAt(0), AisleColor::Peach);
+  store.setColors(idAt(0), test::someColors);
 
-  CHECK(store.aisles()[0].color == AisleColor::Peach);
+  CHECK(store.aisles()[0].colors == test::someColors);
   CHECK(store.aisles()[0].modifiedAt == clock.now);
-  CHECK(test::aisleRows(db)[0].color == "peach");
+  CHECK(test::aisleRows(db)[0].colors ==
+        test::ColorTexts{ "#012345", "#6789ab", "#cdef00", "#ff100a" });
   CHECK(observer.notifications ==
         test::notificationsFor(
-          core::AisleUpdated{ 0, core::AisleField::Color }, 4, 4));
+          core::AisleUpdated{ 0, core::AisleField::Colors }, 4, 4));
 
   observer.notifications.clear();
-  store.setColor(idAt(0), AisleColor::Peach);
+  store.setColors(idAt(0), test::someColors);
   CHECK(observer.notifications.empty());
 }
 
-TEST_CASE_FIXTURE(Fixture,
-                  "Every color is accepted by the database's CHECK constraint")
+TEST_CASE_FIXTURE(
+  Fixture,
+  "Every channel value is accepted by the database's CHECK constraints")
 {
-  for (AisleColor color : core::allAisleColors) {
-    store.setColor(idAt(0), color);
-    CHECK(test::reloadMatches(db, store));
+  for (int value = 0; value <= 255; ++value) {
+    const auto v = static_cast<std::uint8_t>(value);
+    store.setColors(idAt(0),
+                    { { v, 0, 0 }, { 0, v, 0 }, { 0, 0, v }, { v, v, v } });
+    REQUIRE(test::reloadMatches(db, store));
   }
 }
 
@@ -224,8 +227,12 @@ TEST_CASE_FIXTURE(Fixture, "remove soft-deletes the aisle and closes the gap")
   CHECK(observer.notifications ==
         test::notificationsFor(core::AisleRemoved{ 1 }, 4, 3));
   CHECK(test::aisleRows(db).back() ==
-        test::AisleRow{
-          id, "Dairy & eggs", "butter", 1, core::toMillis(clock.now), true });
+        test::Row{ id,
+                   "Dairy & eggs",
+                   { "#f6e9c2", "#5e4600", "#342d16", "#edd68a" },
+                   1,
+                   core::toMillis(clock.now),
+                   true });
   CHECK(test::reloadMatches(db, store));
 }
 
@@ -265,7 +272,7 @@ TEST_CASE_FIXTURE(Fixture,
 {
   const std::string id = idAt(1);
   store.remove(id);
-  REQUIRE(store.create("dairy & EGGS", AisleColor::Mint));
+  REQUIRE(store.create("dairy & EGGS", test::someColors));
   const auto rowsBefore = test::aisleRows(db);
   observer.notifications.clear();
 
@@ -279,7 +286,7 @@ TEST_CASE_FIXTURE(Fixture, "Unknown ids are programming errors")
 {
   CHECK_THROWS_AS((void)store.rename("unknown", "Bakery"),
                   std::invalid_argument);
-  CHECK_THROWS_AS(store.setColor("unknown", AisleColor::Mint),
+  CHECK_THROWS_AS(store.setColors("unknown", test::someColors),
                   std::invalid_argument);
   CHECK_THROWS_AS(store.remove("unknown"), std::invalid_argument);
   CHECK_THROWS_AS((void)store.restore("unknown"), std::invalid_argument);
@@ -290,13 +297,13 @@ TEST_CASE_FIXTURE(Fixture, "Unknown ids are programming errors")
 TEST_CASE_FIXTURE(Fixture,
                   "A failed write changes neither the database nor memory")
 {
-  // Triggers make SQLite fail in the middle of a write, as a full disk would.
+  // Triggers make SQLite fail in the middle of a write, as a full disk would
   SUBCASE("create")
   {
     db.exec("CREATE TRIGGER fail BEFORE INSERT ON aisle "
             "BEGIN SELECT RAISE(ABORT, 'simulated'); END");
     checkFailedWriteChangesNothing(
-      *this, [&] { (void)store.create("Bakery", AisleColor::Mint); });
+      *this, [&] { (void)store.create("Bakery", test::someColors); });
   }
   SUBCASE("rename")
   {
@@ -305,12 +312,12 @@ TEST_CASE_FIXTURE(Fixture,
     checkFailedWriteChangesNothing(
       *this, [&] { (void)store.rename(idAt(0), "Fruit"); });
   }
-  SUBCASE("setColor")
+  SUBCASE("setColors")
   {
-    db.exec("CREATE TRIGGER fail BEFORE UPDATE OF color ON aisle "
+    db.exec("CREATE TRIGGER fail BEFORE UPDATE OF dark_ink ON aisle "
             "BEGIN SELECT RAISE(ABORT, 'simulated'); END");
     checkFailedWriteChangesNothing(
-      *this, [&] { store.setColor(idAt(0), AisleColor::Sky); });
+      *this, [&] { store.setColors(idAt(0), test::someColors); });
   }
   SUBCASE("move, failing at its second statement")
   {
@@ -338,7 +345,7 @@ TEST_CASE_FIXTURE(Fixture,
 TEST_CASE_FIXTURE(Fixture, "A removed observer is no longer notified")
 {
   store.removeObserver(observer);
-  store.setColor(idAt(0), AisleColor::Peach);
+  store.setColors(idAt(0), test::someColors);
   CHECK(observer.notifications.empty());
 }
 
@@ -362,8 +369,8 @@ TEST_CASE_FIXTURE(Fixture, "An observer can unregister while being notified")
   } leaving(store);
   store.addObserver(leaving);
 
-  store.setColor(idAt(0), AisleColor::Peach);
-  store.setColor(idAt(0), AisleColor::Sky);
+  store.setColors(idAt(0), test::someColors);
+  store.setColors(idAt(0), test::otherColors);
 
   CHECK(leaving.calls == 1);
   CHECK(observer.notifications.size() == 4);
@@ -396,7 +403,7 @@ TEST_CASE_FIXTURE(
   } joining(store);
   store.addObserver(joining);
 
-  REQUIRE(store.create("Bakery", AisleColor::Mint));
+  REQUIRE(store.create("Bakery", test::someColors));
 
   REQUIRE(joining.early);
   REQUIRE(joining.late);
@@ -421,7 +428,7 @@ TEST_CASE_FIXTURE(Fixture,
     }
     void aisleChanged(const core::AisleChange&) noexcept override
     {
-      CHECK_THROWS_AS((void)store.create("Bakery", AisleColor::Mint),
+      CHECK_THROWS_AS((void)store.create("Bakery", test::someColors),
                       std::logic_error);
     }
 
@@ -429,7 +436,7 @@ TEST_CASE_FIXTURE(Fixture,
   } meddling(store);
   store.addObserver(meddling);
 
-  store.setColor(idAt(0), AisleColor::Peach);
+  store.setColors(idAt(0), test::someColors);
 
   CHECK(test::names(store) == test::seedNames);
   store.removeObserver(meddling);

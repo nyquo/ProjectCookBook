@@ -19,7 +19,7 @@ function Initialize-ProjectEnv {
     $localOverrides = Join-Path $PSScriptRoot 'local.ps1'
     if (Test-Path $localOverrides) { . $localOverrides }
 
-    # Qt: newest C:\Qt\<version> that has the desktop (host) kit and an Android kit.
+    # Qt: newest C:\Qt\<version> that has the desktop (host) kit and an Android kit
     if (-not $env:QT_VERSION_DIR) {
         $qt = Get-ChildItem 'C:\Qt' -Directory -ErrorAction SilentlyContinue |
             Where-Object {
@@ -38,7 +38,7 @@ function Initialize-ProjectEnv {
     }
     if (-not (Test-Path $env:ANDROID_SDK_ROOT)) { throw "Android SDK not found at $env:ANDROID_SDK_ROOT. Set ANDROID_SDK_ROOT." }
 
-    # NDK: prefer the exact version this Qt was built with.
+    # NDK: prefer the exact version this Qt was built with
     if (-not $env:ANDROID_NDK_ROOT) {
         $coreJson = Get-ChildItem $env:QT_VERSION_DIR -Directory -Filter 'android_*' |
             ForEach-Object { Join-Path $_.FullName 'modules\Core.json' } |
@@ -72,7 +72,7 @@ function Initialize-ProjectEnv {
         }
     }
 
-    # CMake and Gradle prefer forward slashes.
+    # CMake and Gradle prefer forward slashes
     foreach ($name in 'QT_VERSION_DIR', 'ANDROID_SDK_ROOT', 'ANDROID_NDK_ROOT', 'JAVA_HOME') {
         Set-Item "env:$name" ((Get-Item "env:$name").Value -replace '\\', '/')
     }
@@ -96,7 +96,7 @@ function Initialize-ProjectEnv {
     }
 }
 
-# Devices known to adb, with their state ("device" means booted and authorized).
+# Devices known to adb, with their state ("device" means booted and authorized)
 function Get-AdbDevices {
     foreach ($line in (adb devices)) {
         if ($line -match '^(\S+)\t(.+)$') {
@@ -117,7 +117,7 @@ function Get-ApkPath([string]$Preset) {
 
 Initialize-ProjectEnv
 
-# Show what was picked when run by hand (other scripts dot-source this silently).
+# Show what was picked when run by hand (other scripts dot-source this silently)
 if ($Persist -or -not $MyInvocation.ScriptName) {
     Write-Host "QT_VERSION_DIR   = $env:QT_VERSION_DIR"
     Write-Host "ANDROID_SDK_ROOT = $env:ANDROID_SDK_ROOT"

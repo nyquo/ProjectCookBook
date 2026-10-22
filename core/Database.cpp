@@ -17,7 +17,7 @@ void Database::Closer::operator()(sqlite3* db) const noexcept
 
 Database::Database(const std::filesystem::path& path)
 {
-  // SQLite expects UTF-8 file names on every platform.
+  // SQLite expects UTF-8 file names on every platform
   const std::u8string u8Path = path.u8string();
   const std::string fileName(u8Path.begin(), u8Path.end());
 
@@ -124,7 +124,7 @@ std::int64_t Statement::columnInt64(int index) const
 
 std::string Statement::columnText(int index) const
 {
-  // Text before size: the order SQLite documents as safe.
+  // Text before size: the order SQLite documents as safe
   const auto* text = reinterpret_cast<const char*>(
     sqlite3_column_text(m_statement.get(), index));
   const int size = sqlite3_column_bytes(m_statement.get(), index);
@@ -155,7 +155,7 @@ Transaction::~Transaction()
   try {
     m_db.exec("ROLLBACK");
   } catch (const DatabaseError&) {
-    // Some errors already rolled the transaction back.
+    // Some errors already rolled the transaction back
   }
 }
 

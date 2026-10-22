@@ -23,10 +23,10 @@ param(
     [ValidateSet('desktop', 'android-x86_64', 'android-arm64-v8a', 'android-armeabi-v7a', 'core-msvc')]
     [string]$Preset,
 
-    # Re-run CMake configuration from scratch.
+    # Re-run CMake configuration from scratch
     [switch]$Fresh,
 
-    # Run the unit tests after building (desktop builds only).
+    # Run the unit tests after building (desktop builds only)
     [switch]$Test
 )
 

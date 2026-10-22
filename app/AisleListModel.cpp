@@ -4,14 +4,12 @@
 #include "core/Backend.hpp"
 #include "core/Database.hpp"
 
+#include <cstdint>
 #include <expected>
-#include <iterator>
 #include <optional>
 #include <stdexcept>
+#include <utility>
 #include <variant>
-
-static_assert(std::size(core::allAisleColors) == 4,
-              "Mirror new core::AisleColor values in AisleListModel::Color");
 
 template<typename... Handlers>
 struct Overloaded : Handlers...
@@ -19,16 +17,39 @@ struct Overloaded : Handlers...
   using Handlers::operator()...;
 };
 
-// QML can pass any number as a Color.
-static std::optional<core::AisleColor> toCore(AisleListModel::Color color)
+static QColor toQColor(core::Rgb color)
 {
-  for (core::AisleColor coreColor : core::allAisleColors) {
-    if (std::to_underlying(coreColor) == std::to_underlying(color)) {
-      return coreColor;
-    }
+  return QColor(color.red, color.green, color.blue);
+}
+
+// QML can pass any color, but "#rrggbb" holds neither an invalid nor a
+// translucent one
+static std::optional<core::Rgb> toCore(const QColor& color)
+{
+  if (!color.isValid() || color.alpha() != 255) {
+    qWarning("AisleListModel: invalid or translucent color %s",
+             qPrintable(color.name(QColor::HexArgb)));
+    return std::nullopt;
   }
-  qWarning("AisleListModel: invalid color %d", std::to_underlying(color));
-  return std::nullopt;
+  const QColor rgb = color.toRgb();
+  return core::Rgb{ static_cast<std::uint8_t>(rgb.red()),
+                    static_cast<std::uint8_t>(rgb.green()),
+                    static_cast<std::uint8_t>(rgb.blue()) };
+}
+
+static std::optional<core::ThemedColors> toCore(const QColor& fill,
+                                                const QColor& ink,
+                                                const QColor& darkFill,
+                                                const QColor& darkInk)
+{
+  const auto coreFill = toCore(fill);
+  const auto coreInk = toCore(ink);
+  const auto coreDarkFill = toCore(darkFill);
+  const auto coreDarkInk = toCore(darkInk);
+  if (!coreFill || !coreInk || !coreDarkFill || !coreDarkInk) {
+    return std::nullopt;
+  }
+  return core::ThemedColors{ *coreFill, *coreInk, *coreDarkFill, *coreDarkInk };
 }
 
 static AisleListModel::Error toError(core::AisleError error)
@@ -102,27 +123,37 @@ QVariant AisleListModel::data(const QModelIndex& index, int role) const
       return QString::fromStdString(aisle.id);
     case NameRole:
       return QString::fromStdString(aisle.name);
-    case ColorRole:
-      return QVariant::fromValue(static_cast<Color>(aisle.color));
+    case FillRole:
+      return toQColor(aisle.colors.fill);
+    case InkRole:
+      return toQColor(aisle.colors.ink);
+    case DarkFillRole:
+      return toQColor(aisle.colors.darkFill);
+    case DarkInkRole:
+      return toQColor(aisle.colors.darkInk);
   }
   return {};
 }
 
 QHash<int, QByteArray> AisleListModel::roleNames() const
 {
-  return { { AisleIdRole, "aisleId" },
-           { NameRole, "name" },
-           { ColorRole, "color" } };
+  return { { AisleIdRole, "aisleId" },   { NameRole, "name" },
+           { FillRole, "fill" },         { InkRole, "ink" },
+           { DarkFillRole, "darkFill" }, { DarkInkRole, "darkInk" } };
 }
 
-AisleListModel::Error AisleListModel::create(const QString& name, Color color)
+AisleListModel::Error AisleListModel::create(const QString& name,
+                                             const QColor& fill,
+                                             const QColor& ink,
+                                             const QColor& darkFill,
+                                             const QColor& darkInk)
 {
-  const auto coreColor = toCore(color);
-  if (!coreColor) {
+  const auto colors = toCore(fill, ink, darkFill, darkInk);
+  if (!colors) {
     return Error::InvalidRequest;
   }
   return guarded(
-    [&] { return toError(m_store.create(name.toStdString(), *coreColor)); });
+    [&] { return toError(m_store.create(name.toStdString(), *colors)); });
 }
 
 AisleListModel::Error AisleListModel::rename(int row, const QString& name)
@@ -134,14 +165,18 @@ AisleListModel::Error AisleListModel::rename(int row, const QString& name)
     [&] { return toError(m_store.rename(idAt(row), name.toStdString())); });
 }
 
-AisleListModel::Error AisleListModel::setColor(int row, Color color)
+AisleListModel::Error AisleListModel::setColors(int row,
+                                                const QColor& fill,
+                                                const QColor& ink,
+                                                const QColor& darkFill,
+                                                const QColor& darkInk)
 {
-  const auto coreColor = toCore(color);
-  if (!isValidRow(row) || !coreColor) {
+  const auto colors = toCore(fill, ink, darkFill, darkInk);
+  if (!isValidRow(row) || !colors) {
     return Error::InvalidRequest;
   }
   return guarded([&] {
-    m_store.setColor(idAt(row), *coreColor);
+    m_store.setColors(idAt(row), *colors);
     return Error::NoError;
   });
 }
@@ -185,7 +220,7 @@ void AisleListModel::aisleAboutToChange(
       beginRemoveRows({}, c.index, c.index);
     },
     [this](const core::AisleMoved& c) {
-      // Qt wants the row it goes before, counted before the move.
+      // Qt wants the row it goes before, counted before the move
       beginMoveRows({}, c.from, c.from, {}, c.to > c.from ? c.to + 1 : c.to);
     },
     [](const core::AisleUpdated&) {},
@@ -200,14 +235,17 @@ void AisleListModel::aisleChanged(const core::AisleChange& change) noexcept
     [this](const core::AisleRemoved&) { endRemoveRows(); },
     [this](const core::AisleMoved&) { endMoveRows(); },
     [this](const core::AisleUpdated& c) {
-      const int role = c.field == core::AisleField::Name ? NameRole : ColorRole;
-      emit dataChanged(index(c.index), index(c.index), { role });
+      const QList<int> roles =
+        c.field == core::AisleField::Name
+          ? QList<int>{ NameRole }
+          : QList<int>{ FillRole, InkRole, DarkFillRole, DarkInkRole };
+      emit dataChanged(index(c.index), index(c.index), roles);
     },
   };
   std::visit(end, change);
 }
 
-// Rows from QML can be stale, e.g. from a delegate in its remove transition.
+// Rows from QML can be stale, e.g. from a delegate in its remove transition
 bool AisleListModel::isValidRow(int row) const
 {
   if (row >= 0 && row < rowCount()) {

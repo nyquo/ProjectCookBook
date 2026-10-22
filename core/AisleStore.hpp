@@ -14,7 +14,7 @@ namespace core {
 
 class Database;
 
-// Validation failures the user can fix.
+// Validation failures the user can fix
 enum class AisleError
 {
   EmptyName,     // blank once trimmed
@@ -24,10 +24,10 @@ enum class AisleError
 enum class AisleField
 {
   Name,
-  Color
+  Colors
 };
 
-// Changes to AisleStore::aisles(), by index in that list.
+// Changes to AisleStore::aisles(), by index in that list
 struct AisleInserted
 {
   int index;
@@ -40,7 +40,7 @@ struct AisleRemoved
   bool operator==(const AisleRemoved&) const = default;
 };
 
-// The aisle at `from` is now at `to`; those in between shifted by one.
+// The aisle at `from` is now at `to`; those in between shifted by one
 struct AisleMoved
 {
   int from;
@@ -80,28 +80,28 @@ protected:
 class AisleStore
 {
 public:
-  // The database must be migrated.
+  // The database must be migrated
   AisleStore(Database& db, Clock clock);
   AisleStore(const AisleStore&) = delete;
   AisleStore& operator=(const AisleStore&) = delete;
 
   const std::vector<Aisle>& aisles() const { return m_aisles; }
 
-  // Appends; returns the new id.
+  // Appends; returns the new id
   [[nodiscard]] std::expected<std::string, AisleError> create(
     std::string_view name,
-    AisleColor color);
+    const ThemedColors& colors);
   [[nodiscard]] std::expected<void, AisleError> rename(std::string_view id,
                                                        std::string_view name);
-  void setColor(std::string_view id, AisleColor color);
+  void setColors(std::string_view id, const ThemedColors& colors);
   void move(int from, int to);
-  // Soft delete: the row stays, flagged deleted, for restore().
+  // Soft delete: the row stays, flagged deleted, for restore()
   void remove(std::string_view id);
   // Back to the old position, or last if the list got shorter. Fails with
   // DuplicateName if a live aisle took the name meanwhile.
   [[nodiscard]] std::expected<void, AisleError> restore(std::string_view id);
 
-  // Not owned: an observer must unregister before it's destroyed.
+  // Not owned: an observer must unregister before it's destroyed
   void addObserver(AisleObserver& observer);
   void removeObserver(AisleObserver& observer);
 
@@ -110,7 +110,7 @@ private:
   int indexOf(std::string_view id) const;
   void checkIndex(int index) const;
   void checkNotNotifying() const;
-  // The trimmed name, unless blank or taken by another live aisle.
+  // The trimmed name, unless blank or taken by another live aisle
   std::expected<std::string, AisleError> validName(std::string_view name,
                                                    int ignoredIndex = -1) const;
   void setModifiedAt(int first, int last, Timestamp time);

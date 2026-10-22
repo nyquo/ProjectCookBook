@@ -9,7 +9,7 @@ class Database;
 // DatabaseError if one fails or if the database is newer than the app.
 void migrate(Database& db);
 
-// PRAGMA user_version: the number of the last migration applied.
+// PRAGMA user_version: the number of the last migration applied
 int schemaVersion(Database& db);
 int latestSchemaVersion();
 
