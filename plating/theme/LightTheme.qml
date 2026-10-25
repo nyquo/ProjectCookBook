@@ -13,6 +13,17 @@ UiTheme {
     danger: "#b3261e"
     dangerInk: "#ffffff"
     scrim: "#73141016" // rgba(20, 16, 22, 0.45)
+    pressOverlay: Qt.alpha(theme.ink, 0.08)
+    pressOverlayOnFill: Qt.alpha(theme.bg, 0.12)
+
+    tagMint: "#d9efe2"
+    tagMintInk: "#1f5636"
+    tagButter: "#f6e9c2"
+    tagButterInk: "#5e4600"
+    tagSky: "#dce6f7"
+    tagSkyInk: "#1f3e73"
+    tagPeach: "#f8e0d5"
+    tagPeachInk: "#7a3312"
 
     accentRaspberry: "#c4265e"
     accentRaspberryInk: "#ffffff"
@@ -32,4 +43,5 @@ UiTheme {
 
     // Tinted with the current accent
     shadowRaised: Qt.alpha(theme.accent, 0.28)
+    shadowMenu: "#2e000000" // rgba(0, 0, 0, 0.18)
 }

@@ -42,7 +42,8 @@ if(COOKBOOK_BUILD_APP)
     set(CMAKE_DISABLE_FIND_PACKAGE_Qt6GrpcQuick ON)
     set(CMAKE_DISABLE_FIND_PACKAGE_Qt6ProtobufQuick ON)
 
-    find_package(Qt6 6.10 REQUIRED COMPONENTS Quick QuickControls2)
+    # Svg: the image format plugin that loads the ingredient icons
+    find_package(Qt6 6.10 REQUIRED COMPONENTS Quick QuickControls2 Svg)
 
     qt_standard_project_setup(REQUIRES 6.10)
     # One folder for every QML module, so qmllint and qmlcachegen find Plating
@@ -50,11 +51,19 @@ if(COOKBOOK_BUILD_APP)
     set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml")
 
     add_subdirectory(plating)
+    add_subdirectory(app/ui)
     add_subdirectory(app)
+    add_subdirectory(showcase)
 
+    # Plating is generic: it depends on neither the core nor the app's components
     get_target_property(platingLinks plating LINK_LIBRARIES)
-    if("${platingLinks}" MATCHES "(^|;)core(;|$)")
-        message(FATAL_ERROR "Plating must not link the core library (links: ${platingLinks})")
+    if("${platingLinks}" MATCHES "(^|;)(core|cookbookui)(;|$)")
+        message(FATAL_ERROR "Plating must not link core or cookbookui (links: ${platingLinks})")
+    endif()
+    # The app's components are presentational: no core
+    get_target_property(cookbookUiLinks cookbookui LINK_LIBRARIES)
+    if("${cookbookUiLinks}" MATCHES "(^|;)core(;|$)")
+        message(FATAL_ERROR "cookbookui must not link the core library (links: ${cookbookUiLinks})")
     endif()
 endif()
 

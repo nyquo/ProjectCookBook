@@ -63,4 +63,5 @@ try {
 
 if ($Preset -like 'android-*') {
     Write-Host "APK: $(Get-ApkPath $Preset)" -ForegroundColor Green
+    Write-Host "Showcase APK: $(Get-ApkPath $Preset showcase)" -ForegroundColor Green
 }

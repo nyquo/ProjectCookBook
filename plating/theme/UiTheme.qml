@@ -4,7 +4,9 @@ import QtQuick
 // Each one is required, so a theme that misses one fails to instantiate. Sizes,
 // spacing and fonts don't change with the theme: they're in UiMetrics and
 // UiTypography. Colors that are data rather than tokens (tags, aisles) come with
-// a light and a dark variant: `dark` says which one to use.
+// a light and a dark variant: `dark` says which one to use. The four tag
+// families below are the design's defaults: chrome (tagButter for notes) and
+// previews use them, data keeps its own colors.
 //
 // Token names map to properties as follows:
 // - kebab-case becomes camelCase: ink-muted → inkMuted, accent-basil-soft → accentBasilSoft;
@@ -45,6 +47,22 @@ QtObject {
     required property color dangerInk
     // Behind bottom sheets and dialogs
     required property color scrim
+    // Over a pressed control: pressOverlay on light fills, pressOverlayOnFill on
+    // ink, accent and danger fills
+    required property color pressOverlay
+    required property color pressOverlayOnFill
+
+    // The four color families, each a fill and the ink drawn on it (7:1+).
+    // They belong to data (tags, aisles), never to chrome, except tagButter for
+    // note cards.
+    required property color tagMint
+    required property color tagMintInk
+    required property color tagButter
+    required property color tagButterInk
+    required property color tagSky
+    required property color tagSkyInk
+    required property color tagPeach
+    required property color tagPeachInk
 
     // The five accent sets. Each accent passes 4.5:1 as text on bg, surface and
     // its own soft fill. Basil is close to the mint tag color: such tags lose
@@ -65,9 +83,10 @@ QtObject {
     required property color accentBasilInk
     required property color accentBasilSoft
 
-    // Cast by floating accent controls only (New recipe, Add to plan); nothing
-    // else has a shadow.
+    // Cast by the primary Button and the floating action button only
     required property color shadowRaised
+    // Cast by menus, with a line outline; their only shadow
+    required property color shadowMenu
 
     // One of UiTheme.Accent. Only the four properties below follow it
     property int accentChoice: UiTheme.Raspberry

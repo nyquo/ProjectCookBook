@@ -12,7 +12,9 @@ Personal Android recipe app: Qt 6.12 / QML + C++23, CMake. Build, run and device
 
 - `core/`: static library, standard C++23, **no Qt** (no QString, QObject, QtSql, QJson, qrc). CMake fails if it links Qt. Third-party code: permissive licenses only, vendored in `third_party/`.
 - `app/`: the Qt/QML layer. Adapts core types to list models and builds every user-facing text (qsTr, QLocale). Qt: LGPL modules only.
-- `plating/`: static QML module `Plating`, the app's Qt Quick Controls style and design tokens (themes, metrics, typography, its OFL font). Never links or includes `core`; CMake fails if it links it. QML reads the theme through `readonly property UiTheme theme: Plating.theme as UiTheme`; color values only in `LightTheme.qml`/`DarkTheme.qml`, design px only in `UiMetrics.qml`/`UiTypography.qml`. See `plating/README.md`.
+- `plating/`: static QML module `Plating`, the app's Qt Quick Controls style, design tokens (themes, metrics, typography, motion, its OFL font) and generic components. Never links or includes `core` or `app/ui`; CMake fails if it links them. QML reads the theme through `readonly property UiTheme theme: Plating.theme as UiTheme`; color values only in `LightTheme.qml`/`DarkTheme.qml`, design px only in `UiMetrics.qml`/`UiTypography.qml`, durations only in `UiMotion.qml`. See `plating/README.md`.
+- `app/ui/`: static QML module `CookbookUi`, the app's own components (recipes, ingredients, shopping), built from Plating's. Presentational: no core (CMake fails if it links it), no models, no formatting. Its design px live in `CookbookMetrics.qml`, its text styles in `CookbookTypography.qml`. See `app/ui/README.md`.
+- `showcase/`: a separate executable showing every Plating and CookbookUi component; links no core. `--capture <folder>` saves each page in both themes as PNG files.
 - `core::Backend` owns the `Database` and every store. `main()` creates it before the QML engine and hands it to `app::setBackend()`.
 - One **store** per table (e.g. `core::AisleStore`):
   - loads the live rows into memory at startup; reads come from memory;
