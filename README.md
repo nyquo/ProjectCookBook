@@ -32,6 +32,7 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 Useful flags:
 
+* `-Showcase` runs the component showcase instead of the app: every UI component in its variants and states, with a toolbar for light/dark, the accent and reduced motion. On desktop, `showcase.exe --capture <folder>` saves each page in both themes as PNG files and quits.
 * `-Logs` streams the app's logcat output after launch (Ctrl+C to stop).
 * `-NoBuild` reinstalls the last build without rebuilding.
 * `-Serial <id>` picks a device when several are connected.

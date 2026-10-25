@@ -1,6 +1,8 @@
 import QtQuick
 
 UiTheme {
+    id: theme
+
     dark: true
 
     bg: "#141214"
@@ -11,6 +13,17 @@ UiTheme {
     danger: "#ffb4ab"
     dangerInk: "#410e0b"
     scrim: "#99000000" // rgba(0, 0, 0, 0.6)
+    pressOverlay: Qt.alpha(theme.ink, 0.08)
+    pressOverlayOnFill: Qt.alpha(theme.bg, 0.12)
+
+    tagMint: "#1c3327"
+    tagMintInk: "#a3ddba"
+    tagButter: "#342d16"
+    tagButterInk: "#edd68a"
+    tagSky: "#1c273d"
+    tagSkyInk: "#afc8f5"
+    tagPeach: "#3b241b"
+    tagPeachInk: "#f6b89c"
 
     accentRaspberry: "#ff7eaa"
     accentRaspberryInk: "#2b0917"
@@ -29,4 +42,5 @@ UiTheme {
     accentBasilSoft: "#1b3320"
 
     shadowRaised: "#80000000" // rgba(0, 0, 0, 0.5)
+    shadowMenu: "#2e000000" // rgba(0, 0, 0, 0.18)
 }

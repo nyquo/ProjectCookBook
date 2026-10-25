@@ -113,7 +113,12 @@ void Plating::applyTheme(QObject* theme)
 QObject* Plating::inheritedTheme() const
 {
   if (auto* parentPlating = qobject_cast<Plating*>(attachedParent())) {
-    return parentPlating->theme();
+    if (QObject* theme = parentPlating->theme()) {
+      return theme;
+    }
   }
-  return defaultTheme(parent());
+  // An object being destroyed has already lost its engine: keeping its theme
+  // spares its last bindings a null one
+  QObject* fallback = defaultTheme(parent());
+  return fallback ? fallback : m_theme.data();
 }

@@ -17,6 +17,10 @@
 
 .EXAMPLE
     .\scripts\run.ps1 desktop
+
+.EXAMPLE
+    .\scripts\run.ps1 emulator -Showcase
+    Runs the component showcase instead of the app.
 #>
 param(
     [Parameter(Mandatory, Position = 0)]
@@ -33,19 +37,25 @@ param(
     [switch]$NoBuild,
 
     # Stream the app's logcat output after launching (Ctrl+C to stop)
-    [switch]$Logs
+    [switch]$Logs,
+
+    # Run the component showcase instead of the app
+    [switch]$Showcase
 )
 
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\env.ps1"
 
 $root = Split-Path $PSScriptRoot
+# The executable's source folder and its desktop file name
+$sourceFolder = if ($Showcase) { 'showcase' } else { 'app' }
+$exeName = if ($Showcase) { 'showcase.exe' } else { 'appProjectCookbook.exe' }
 
 if ($Target -eq 'desktop') {
     if (-not $NoBuild) { & "$PSScriptRoot\build.ps1" desktop }
-    $exe = Get-ChildItem (Join-Path $root 'build\desktop') -Filter '*.exe' | Select-Object -First 1
-    if (-not $exe) { throw 'Desktop executable not found. Build it first: .\scripts\build.ps1 desktop' }
-    & $exe.FullName
+    $exe = Join-Path $root "build\desktop\$exeName"
+    if (-not (Test-Path $exe)) { throw 'Desktop executable not found. Build it first: .\scripts\build.ps1 desktop' }
+    & $exe
     return
 }
 
@@ -78,7 +88,7 @@ if (-not $preset) { throw "No build preset for this device's ABIs ($($abis -join
 Write-Host "Device $Serial supports $($abis -join ', '); using preset $preset."
 
 if (-not $NoBuild) { & "$PSScriptRoot\build.ps1" $preset }
-$apk = Get-ApkPath $preset
+$apk = Get-ApkPath $preset $sourceFolder
 
 # --- Install and launch -----------------------------------------------------------
 $aapt2 = Get-ChildItem (Join-Path $env:ANDROID_SDK_ROOT 'build-tools') -Directory |

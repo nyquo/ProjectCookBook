@@ -11,8 +11,9 @@
 
 #include <optional>
 
-// Registers the static Plating module; otherwise the linker drops it
+// Registers the static QML modules; otherwise the linker drops them
 Q_IMPORT_QML_PLUGIN(PlatingPlugin)
+Q_IMPORT_QML_PLUGIN(CookbookUiPlugin)
 
 static std::filesystem::path databasePath()
 {

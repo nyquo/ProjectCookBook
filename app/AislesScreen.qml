@@ -13,7 +13,7 @@ ColumnLayout {
     property string lastDeletedId
     // The tag color that Add and Recolor copy: the first one until another is
     // tapped
-    property TagPill chosenColor
+    property ColorChoice chosenColor
 
     // Shows the error, if any; returns true on success
     function show(error) {
@@ -35,7 +35,7 @@ ColumnLayout {
     }
 
     // A tag pill, in the current theme's variant of its colors
-    component TagPill: Rectangle {
+    component ColorChoice: Rectangle {
         id: pill
 
         readonly property UiTheme theme: Plating.theme as UiTheme
@@ -115,7 +115,7 @@ ColumnLayout {
         Repeater {
             model: tagColors
 
-            delegate: TagPill {
+            delegate: ColorChoice {
                 id: swatch
 
                 chosen: screen.chosenColor === swatch
@@ -124,7 +124,7 @@ ColumnLayout {
 
             onItemAdded: (index, item) => {
                 if (index === 0 && screen.chosenColor === null)
-                    screen.chosenColor = item as TagPill
+                    screen.chosenColor = item as ColorChoice
             }
         }
     }
@@ -162,7 +162,7 @@ ColumnLayout {
                     text: row.index
                 }
 
-                TagPill {
+                ColorChoice {
                     name: row.name
                     fill: row.fill
                     ink: row.ink

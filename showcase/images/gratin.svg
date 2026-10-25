@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <!-- A stand-in photo: a gratin dish seen from above -->
+  <defs>
+    <radialGradient id="crust" cx="0.45" cy="0.4" r="0.7">
+      <stop offset="0" stop-color="#f3c96b"/>
+      <stop offset="0.6" stop-color="#d9973a"/>
+      <stop offset="1" stop-color="#9c5a1c"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="#3c2a20"/>
+  <rect x="40" y="40" width="320" height="220" rx="48" fill="#e9e2d6"/>
+  <rect x="62" y="62" width="276" height="176" rx="34" fill="url(#crust)"/>
+  <g fill="#f6dc93" opacity="0.8">
+    <ellipse cx="130" cy="110" rx="34" ry="16"/>
+    <ellipse cx="220" cy="150" rx="40" ry="18"/>
+    <ellipse cx="280" cy="105" rx="26" ry="12"/>
+    <ellipse cx="160" cy="195" rx="38" ry="15"/>
+  </g>
+  <g fill="#7a3d12" opacity="0.6">
+    <circle cx="190" cy="95" r="6"/>
+    <circle cx="255" cy="200" r="8"/>
+    <circle cx="105" cy="165" r="5"/>
+  </g>
+</svg>

@@ -4,8 +4,8 @@ qt_add_executable(appProjectCookbook
 
 qt_add_qml_module(appProjectCookbook
     URI ProjectCookbook
-    # Also gives qmlcachegen Plating's import path, so it compiles typed code
-    DEPENDENCIES TARGET plating
+    # Also gives qmlcachegen the modules' import paths, so it compiles typed code
+    DEPENDENCIES TARGET plating TARGET cookbookui
     QML_FILES
         Main.qml
         AislesScreen.qml
@@ -25,9 +25,11 @@ target_compile_definitions(appProjectCookbook PRIVATE
     APP_VERSION="${PROJECT_VERSION}"
 )
 
-# The plugin target too: Plating is a static QML module (see main.cpp)
+# The plugin targets too: Plating and CookbookUi are static QML modules (see
+# main.cpp)
 target_link_libraries(appProjectCookbook PRIVATE
-    core plating platingplugin Qt6::Quick Qt6::QuickControls2
+    core plating platingplugin cookbookui cookbookuiplugin
+    Qt6::Quick Qt6::QuickControls2 Qt6::Svg
 )
 
 set_target_properties(appProjectCookbook PROPERTIES

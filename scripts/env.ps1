@@ -105,8 +105,9 @@ function Get-AdbDevices {
     }
 }
 
-function Get-ApkPath([string]$Preset) {
-    $buildDir = Join-Path (Split-Path $PSScriptRoot) "build\$Preset"
+# $Target is the executable's source folder: app or showcase
+function Get-ApkPath([string]$Preset, [string]$Target = 'app') {
+    $buildDir = Join-Path (Split-Path $PSScriptRoot) "build\$Preset\$Target"
     $apk = Get-ChildItem $buildDir -Recurse -Filter '*.apk' -ErrorAction SilentlyContinue |
         Where-Object { $_.FullName -match '\\outputs\\apk\\' } |
         Sort-Object LastWriteTime -Descending |
