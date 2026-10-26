@@ -1,8 +1,15 @@
+#include "core/AisleStore.hpp"
+#include "core/IngredientStore.hpp"
 #include "core/migrations.hpp"
+#include "core/text.hpp"
 #include "testSupport.hpp"
 
 #include <doctest/doctest.h>
 #include <sqlite3.h>
+
+#include <map>
+#include <optional>
+#include <set>
 
 TEST_CASE("Migrating a new database applies every migration")
 {
@@ -206,4 +213,167 @@ TEST_CASE("The tag_color table itself rejects invalid rows")
         .run();
     });
   });
+}
+
+TEST_CASE("The first migration seeds the default catalog")
+{
+  core::Database db(":memory:");
+  const core::AisleStore aisles(test::migrated(db), core::systemNow);
+  const core::IngredientStore store(db, core::systemNow, aisles);
+  const auto& items = store.ingredients();
+
+  REQUIRE(items.size() == 34);
+  CHECK(items[0] == core::Ingredient{ "01a11df5-a40c-713e-b0e1-0a3fcc878b23",
+                                      "Apples",
+                                      "apples",
+                                      aisles.aisles()[0].id,
+                                      "apple",
+                                      core::Amount{ 1, core::Unit::Kilograms },
+                                      true,
+                                      test::seedTime });
+
+  std::map<std::string, int> perAisle;
+  std::set<std::string> ids;
+  for (const core::Ingredient& item : items) {
+    CAPTURE(item.name);
+    CHECK(item.inCatalog);
+    CHECK(item.canonicalName == core::canonicalName(item.name));
+    CHECK(item.icon.has_value());
+    CHECK(item.oneTap.has_value());
+    CHECK(item.modifiedAt == test::seedTime);
+    REQUIRE(item.aisleId.has_value());
+    ++perAisle[*item.aisleId];
+    ids.insert(item.id);
+  }
+  CHECK(ids.size() == items.size());
+  // Produce, Dairy & eggs, Meat & fish, Pantry
+  CHECK(perAisle == std::map<std::string, int>{ { aisles.aisles()[0].id, 15 },
+                                                { aisles.aisles()[1].id, 7 },
+                                                { aisles.aisles()[2].id, 5 },
+                                                { aisles.aisles()[3].id, 7 } });
+}
+
+TEST_CASE("The first migration creates no settings")
+{
+  core::Database db(":memory:");
+  core::migrate(db);
+  core::Statement count = db.prepare("SELECT count(*) FROM setting");
+  REQUIRE(count.step());
+  CHECK(count.columnInt64(0) == 0);
+}
+
+namespace {
+
+// A valid catalog row; tests break one column at a time
+struct IngredientRow
+{
+  std::string id = "i";
+  std::string name = "Leeks";
+  std::string canonicalName = "leeks";
+  std::optional<std::string> aisleId = "01a11df5-a400-7c7d-9ae7-fc4361b1e2a5";
+  std::optional<std::string> icon = "leaf";
+  std::optional<double> quantity = 1.5;
+  std::optional<std::string> unit = "kg";
+  int inCatalog = 1;
+  int deleted = 0;
+};
+
+int insert(core::Database& db, const IngredientRow& row)
+{
+  return test::errorCode([&] {
+    db.prepare("INSERT INTO ingredient (id, display_name, canonical_name, "
+               "aisle_id, icon, one_tap_quantity, one_tap_unit, in_catalog, "
+               "modified_at, deleted) "
+               "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 0, ?9)")
+      .bind(1, row.id)
+      .bind(2, row.name)
+      .bind(3, row.canonicalName)
+      .bind(4, row.aisleId)
+      .bind(5, row.icon)
+      .bind(6, row.quantity)
+      .bind(7, row.unit)
+      .bind(8, row.inCatalog)
+      .bind(9, row.deleted)
+      .run();
+  });
+}
+
+}
+
+TEST_CASE("The ingredient table itself rejects invalid rows")
+{
+  core::Database db(":memory:");
+  core::migrate(db);
+  const auto with = [](auto change) {
+    IngredientRow row;
+    change(row);
+    return row;
+  };
+
+  CHECK(insert(db, with([](auto& r) { r.name = " "; })) ==
+        SQLITE_CONSTRAINT_CHECK);
+  CHECK(insert(db, with([](auto& r) { r.canonicalName = ""; })) ==
+        SQLITE_CONSTRAINT_CHECK);
+  CHECK(insert(db, with([](auto& r) { r.icon = ""; })) ==
+        SQLITE_CONSTRAINT_CHECK);
+  CHECK(insert(db, with([](auto& r) { r.unit = "tbsp"; })) ==
+        SQLITE_CONSTRAINT_CHECK);
+  CHECK(insert(db, with([](auto& r) { r.quantity = 0.0; })) ==
+        SQLITE_CONSTRAINT_CHECK);
+  CHECK(insert(db, with([](auto& r) { r.quantity = -1.0; })) ==
+        SQLITE_CONSTRAINT_CHECK);
+  CHECK(insert(db, with([](auto& r) {
+                 r.inCatalog = 0;
+                 r.unit.reset();
+               })) == SQLITE_CONSTRAINT_CHECK);
+  CHECK(insert(db, with([](auto& r) {
+                 r.inCatalog = 0;
+                 r.quantity.reset();
+               })) == SQLITE_CONSTRAINT_CHECK);
+  CHECK(insert(db, with([](auto& r) { r.aisleId.reset(); })) ==
+        SQLITE_CONSTRAINT_CHECK);
+  CHECK(insert(db, with([](auto& r) {
+                 r.quantity.reset();
+                 r.unit.reset();
+               })) == SQLITE_CONSTRAINT_CHECK);
+  CHECK(insert(db, with([](auto& r) { r.inCatalog = 2; })) ==
+        SQLITE_CONSTRAINT_CHECK);
+  CHECK(insert(db, with([](auto& r) { r.aisleId = "no-such-aisle"; })) ==
+        SQLITE_CONSTRAINT_FOREIGNKEY);
+
+  CHECK(insert(db, IngredientRow{}) == SQLITE_OK);
+  CHECK(insert(db, with([](auto& r) { r.id = "j"; })) ==
+        SQLITE_CONSTRAINT_UNIQUE);
+  // Deleted rows don't count; outside the catalog, nothing else is required
+  CHECK(insert(db, with([](auto& r) {
+                 r.id = "k";
+                 r.deleted = 1;
+               })) == SQLITE_OK);
+  CHECK(insert(db, with([](auto& r) {
+                 r.id = "l";
+                 r.canonicalName = "leek";
+                 r.inCatalog = 0;
+                 r.aisleId.reset();
+                 r.icon.reset();
+                 r.quantity.reset();
+                 r.unit.reset();
+               })) == SQLITE_OK);
+}
+
+TEST_CASE("The setting table itself rejects invalid rows")
+{
+  core::Database db(":memory:");
+  core::migrate(db);
+  const auto insert = [&](std::string_view key) {
+    return test::errorCode([&] {
+      db.prepare("INSERT INTO setting (key, value, modified_at) "
+                 "VALUES (?1, 'x', 0)")
+        .bind(1, key)
+        .run();
+    });
+  };
+
+  CHECK(insert("") == SQLITE_CONSTRAINT_CHECK);
+  CHECK(insert("theme") == SQLITE_OK);
+  CHECK(insert("theme") == SQLITE_CONSTRAINT_PRIMARYKEY);
 }

@@ -1,6 +1,6 @@
 # Database schema
 
-The migrations in [core/schema/](../core/schema/) are the source of truth; this page explains them. Conventions shared by every table are in [CLAUDE.md](../CLAUDE.md#database-conventions).
+The migrations in [core/schema/](../core/schema/) are the source of truth; this page explains them. Conventions shared by every table (but `setting`, see [below](#setting)) are in [CLAUDE.md](../CLAUDE.md#database-conventions).
 
 ```mermaid
 erDiagram
@@ -26,9 +26,27 @@ erDiagram
         INTEGER modified_at "ms since Unix epoch, UTC"
         INTEGER deleted "0 or 1 (soft delete)"
     }
+    ingredient {
+        TEXT id PK "UUIDv7"
+        TEXT display_name "trimmed, as typed"
+        TEXT canonical_name "computed by core; unique among live ingredients"
+        TEXT aisle_id FK "nullable; may be a deleted aisle's"
+        TEXT icon "nullable icon key"
+        REAL one_tap_quantity "nullable; above 0"
+        TEXT one_tap_unit "nullable; pcs, g, kg, ml, cl, l, pack, bunch"
+        INTEGER in_catalog "0 or 1"
+        INTEGER modified_at "ms since Unix epoch, UTC"
+        INTEGER deleted "0 or 1 (soft delete)"
+    }
+    setting {
+        TEXT key PK "e.g. theme"
+        TEXT value "a language-neutral code, e.g. dark"
+        INTEGER modified_at "ms since Unix epoch, UTC"
+    }
+    aisle ||--o{ ingredient : "groups"
 ```
 
-There's no relation between the two tables: an aisle copies a tag color's four colors when it gets them.
+There's no relation between `tag_color` and `aisle`: an aisle copies a tag color's four colors when it gets them. `setting` stands alone.
 
 ## Colors
 
@@ -48,6 +66,8 @@ There's no relation between the two tables: an aisle copies a tag color's four c
 The colors offered for tags and aisles. Created by `001_catalog.sql`, loaded by `core::TagColorStore`, tested in `core/tests/tagColorStoreTests.cpp`.
 
 **Read-only for now**: the store only loads the live rows, in position order (ties by id). It has no operations yet, so nothing in the app writes this table.
+
+**Not used by the aisle screens yet**: they offer the theme's four tag families (Mint, Butter, Sky, Peach: `app/AisleColors.qml`), whose values equal these rows'.
 
 **Name**: unique among live tag colors, ignoring ASCII case: the partial index `tag_color_name_live`, like `aisle_name_live`. Seeded in English; the app doesn't translate them.
 
@@ -72,7 +92,7 @@ User-defined aisles that group the shopping list. Created by `001_catalog.sql`, 
 | create | Appended last. |
 | rename, setColors | One row. No write if nothing changes. setColors writes the four color columns together. |
 | move(from, to) | The aisles in between shift by one. |
-| remove | Soft delete (`deleted = 1`), then the live aisles after it shift up to close the gap. The deleted row keeps its old position. |
+| remove | Refused (`InUse`) while catalog items are in the aisle. Otherwise soft delete (`deleted = 1`), then the live aisles after it shift up to close the gap. The deleted row keeps its old position. |
 | restore | Back at min(old position, live count), shifting the others down. Fails with `DuplicateName` if a live aisle took the name meanwhile. |
 
 - move, remove and restore are each one transaction.
@@ -80,6 +100,48 @@ User-defined aisles that group the shopping list. Created by `001_catalog.sql`, 
 
 **Seed rows**: Produce (Mint's colors), Dairy & eggs (Butter's), Meat & fish (Peach's), Pantry (Sky's), at positions 0 to 3. Their ids and `modified_at` are fixed, so every device starts with identical rows.
 
-**"Other"** is not a row: the UI shows it for items whose aisle is gone.
+**"Other"** is not a row: the UI shows it for ingredients whose aisle is gone.
 
-**Not yet enforced**: an aisle can only be deleted while empty. That needs the shopping-list table; see the TODO in `AisleStore::remove`.
+**Deleting**: refused while catalog items are in the aisle; ingredients outside the catalog don't hold it back, and show under "Other" once it's gone. Shopping-list items will hold it too; see the TODO in `AisleStore::remove`.
+
+## ingredient
+
+The ingredient dictionary, which recipes will link to, and the shopping catalog: the rows with `in_catalog = 1`. Created by `001_catalog.sql`, managed by `core::IngredientStore`, tested in `core/tests/ingredientStoreTests.cpp`.
+
+**Names**
+- `display_name`: trimmed of ASCII whitespace, as the user typed it.
+- `canonical_name`: `core::canonicalName(display_name)`: lowercase, accents removed, whitespace (no-break spaces too) trimmed and collapsed. "Crème  Fraîche" gives "creme fraiche". It folds ASCII and the Latin-1 and Latin Extended-A letters (œ gives "oe", ß "ss") and typographic apostrophes; other scripts stay as they are. No plural folding: "egg" and "eggs" are two ingredients.
+- `canonical_name` is unique among live ingredients, catalog items or not: the partial index `ingredient_canonical_name_live`. Empty once folded → `EmptyName`.
+- Search matches folded names: "creme" finds "Crème fraîche".
+
+**Columns**
+- `aisle_id`: references `aisle`. Since aisles are only soft-deleted, it can point to a deleted aisle: the UI then shows the ingredient under "Other".
+- `icon`: an icon key, the file name of an icon in `app/ui/icons/ingredients/` without `.svg`. NULL: the UI shows the jar.
+- `one_tap_quantity` and `one_tap_unit`: what one tap adds to the shopping list. Both set or both NULL (CHECK). Units are codes, mapped to `core::Unit`.
+- A catalog row has an aisle and a one-tap amount (CHECK). The store also requires the aisle to be live.
+
+**Operations**
+
+| Operation | Effect |
+| --- | --- |
+| addToCatalog | A new row, appended. If a live ingredient outside the catalog has the same canonical name, that row is reused instead: it gets the new fields and `in_catalog = 1`. A catalog item with that name → `DuplicateName`. |
+| updateCatalogItem | One row; no write if nothing changes. A name another catalog item has → `DuplicateName`; one an ingredient outside the catalog has → `NameTaken`. |
+| removeFromCatalog | "Delete from catalog": `in_catalog = 0`, the row stays live for recipes. |
+| restoreToCatalog | Undo: `in_catalog = 1` again. Fails with `AisleDeleted` if its aisle was deleted meanwhile. |
+
+The store keeps the live rows in creation order (by id). The catalog screen's order (aisle order, "Other" last, then by name in the user's locale) and its filters come from `core::catalogView()`.
+
+**Seed rows**: 34 catalog items over the four default aisles (Produce 15, Dairy & eggs 7, Meat & fish 5, Pantry 7), each with an icon and a one-tap amount, using all eight units. Names are in English; the app doesn't translate them. Ids and `modified_at` are fixed like the aisles'.
+
+## setting
+
+The app's settings, by key: a key-value table, so it breaks two of the conventions every other table follows. Created by `001_catalog.sql`, managed by `core::SettingStore`, tested in `core/tests/settingStoreTests.cpp`.
+
+- **No `id`**: the key is the primary key.
+- **No `deleted`**: a setting is set once, then only changes; nothing removes one. A key with no row has its default value.
+- **Values** are language-neutral codes, never translated text. Code that owns a setting maps it to a C++ enum and falls back to the default for a value it doesn't know (e.g. written by a newer version).
+
+| Key | Values | Default | Owner |
+| --- | --- | --- | --- |
+| `theme` | `system`, `light`, `dark` | `system` | `core/appearance.hpp` |
+| `accent` | `raspberry`, `spirulina`, `blueberry`, `saffron`, `basil` | `raspberry` | `core/appearance.hpp` |

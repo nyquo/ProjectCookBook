@@ -1,12 +1,21 @@
 add_library(core STATIC
     Aisle.hpp
     AisleStore.hpp AisleStore.cpp
+    Amount.hpp Amount.cpp
+    appearance.hpp appearance.cpp
     Backend.hpp Backend.cpp
+    catalogView.hpp catalogView.cpp
     clock.hpp
     Database.hpp Database.cpp
+    Ingredient.hpp
+    IngredientStore.hpp IngredientStore.cpp
+    listEdits.hpp listEdits.cpp
     migrations.hpp migrations.cpp
+    Observers.hpp
+    SettingStore.hpp SettingStore.cpp
     TagColor.hpp
     TagColorStore.hpp TagColorStore.cpp
+    text.hpp text.cpp
     ThemedColors.hpp ThemedColors.cpp
     UuidV7Generator.hpp UuidV7Generator.cpp
 )

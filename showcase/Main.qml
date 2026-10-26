@@ -83,6 +83,15 @@ ApplicationWindow {
             page: Component {
                 ShoppingPage {}
             }
+        },
+        PageEntry {
+            slug: "catalog"
+            app: true
+            title: qsTr("Catalog and settings")
+            summary: qsTr("Card, IconDiscStack, AislesButton, ColorDot, ColorMenu, AisleForm, AisleEditRow, IngredientIconGrid")
+            page: Component {
+                CatalogPage {}
+            }
         }
     ]
 

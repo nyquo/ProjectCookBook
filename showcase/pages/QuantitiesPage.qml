@@ -133,6 +133,25 @@ GroupPage {
     }
 
     Specimen {
+        title: qsTr("QuantityField: without its header")
+        note: qsTr("The caller labels the card itself, e.g. \"One tap adds\" above it.")
+
+        QuantityField {
+            width: parent.width
+            header: false
+            units: page.metricUnits
+            unit: page.unit
+            amount: page.amount
+            amountText: page.format(page.amount)
+            onAmountEdited: amount => page.amount = amount
+            onUnitEdited: (unit, amount) => {
+                page.unit = unit
+                page.amount = amount
+            }
+        }
+    }
+
+    Specimen {
         title: qsTr("QuantityField: compact, on a surface")
         onSurface: true
 

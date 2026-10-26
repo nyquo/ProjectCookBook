@@ -2,6 +2,8 @@
 
 #include "core/AisleStore.hpp"
 #include "core/Database.hpp"
+#include "core/IngredientStore.hpp"
+#include "core/SettingStore.hpp"
 #include "core/TagColorStore.hpp"
 #include "core/clock.hpp"
 
@@ -23,13 +25,18 @@ public:
                    Clock clock = systemNow);
 
   TagColorStore& tagColors() { return m_tagColors; }
+  SettingStore& settings() { return m_settings; }
   AisleStore& aisles() { return m_aisles; }
+  IngredientStore& ingredients() { return m_ingredients; }
 
 private:
   Database m_db;
   // The first store migrates the database
   TagColorStore m_tagColors;
+  SettingStore m_settings;
   AisleStore m_aisles;
+  // Checks aisles against m_aisles
+  IngredientStore m_ingredients;
 };
 
 }

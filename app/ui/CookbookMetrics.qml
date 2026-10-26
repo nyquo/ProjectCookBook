@@ -114,4 +114,53 @@ QtObject {
     readonly property real ingredientTileRadius: UiScaler.scale(22)
     readonly property real ingredientTileStepperPadding: UiScaler.scale(2)
     readonly property real ingredientTileLinkIcon: UiMetrics.space3
+
+    // IconDiscStack: discs, how much each overlaps the previous one, their
+    // surface ring, icons
+    readonly property real discStackDisc: UiScaler.scale(34)
+    readonly property real discStackOverlap: UiMetrics.space2
+    readonly property real discStackRing: UiScaler.scale(3)
+    readonly property real discStackIcon: UiScaler.scale(19)
+
+    // AislesButton: side padding, dots, how much each overlaps the previous one,
+    // their surface ring
+    readonly property real aislesButtonPadding: UiMetrics.space4
+    readonly property real aislesButtonDot: UiMetrics.space3
+    readonly property real aislesButtonDotOverlap: UiMetrics.space1
+    readonly property real aislesButtonDotRing: UiScaler.scale(2)
+
+    // ColorDot: touch target, disc, selection ring
+    readonly property real colorDotTarget: UiMetrics.sizeTouch
+    readonly property real colorDotDisc: UiScaler.scale(30)
+    readonly property real colorDotRing: UiScaler.scale(40)
+
+    // AisleForm: padding, gap between its rows
+    readonly property real aisleFormPadding: UiMetrics.space4
+    readonly property real aisleFormGap: UiMetrics.space3
+
+    // AisleEditRow: height, the color dot
+    readonly property real aisleRowHeight: UiMetrics.sizeCta
+    readonly property real aisleRowDot: UiScaler.scale(14)
+
+    // IngredientIconGrid: card padding, gap between rows, cells, their radius
+    readonly property real iconGridPadding: UiMetrics.space3
+    readonly property real iconGridGap: UiMetrics.space2
+    readonly property real iconGridCell: UiMetrics.sizeControlVisual
+    readonly property real iconGridCellRadius: UiMetrics.space4
+
+    // Settings: between sections; between a card's rows; a row's label to its
+    // control; the accent swatches' touch target (their disc is ColorSwatch's)
+    readonly property real settingsSectionGap: UiScaler.scale(22)
+    readonly property real settingsRowGap: UiScaler.scale(18)
+    readonly property real settingsLabelGap: UiMetrics.space3
+    readonly property real accentSwatch: UiScaler.scale(52)
+
+    // Catalog: between the header's parts; between aisle blocks; the edit icon
+    // on a row; the floating button's distance to the right edge and above the
+    // bottom inset
+    readonly property real catalogHeaderGap: UiScaler.scale(14)
+    readonly property real catalogGroupGap: UiScaler.scale(18)
+    readonly property real catalogEditIcon: UiMetrics.iconM
+    readonly property real catalogFabRight: UiScaler.scale(18)
+    readonly property real catalogFabBottom: UiMetrics.space6
 }

@@ -11,7 +11,7 @@ Personal Android recipe app: Qt 6.12 / QML + C++23, CMake. Build, run and device
 ## Architecture
 
 - `core/`: static library, standard C++23, **no Qt** (no QString, QObject, QtSql, QJson, qrc). CMake fails if it links Qt. Third-party code: permissive licenses only, vendored in `third_party/`.
-- `app/`: the Qt/QML layer. Adapts core types to list models and builds every user-facing text (qsTr, QLocale). Qt: LGPL modules only.
+- `app/`: the Qt/QML layer. Adapts core types to list models and builds every user-facing text (qsTr, QLocale). Qt: LGPL modules only. Texts with a count use `%n`/`%Ln`; their English plural forms live in `app/i18n/projectcookbook_en.ts`: after adding one, build the `update_translations` target and fill in the new forms.
 - `plating/`: static QML module `Plating`, the app's Qt Quick Controls style, design tokens (themes, metrics, typography, motion, its OFL font) and generic components. Never links or includes `core` or `app/ui`; CMake fails if it links them. QML reads the theme through `readonly property UiTheme theme: Plating.theme as UiTheme`; color values only in `LightTheme.qml`/`DarkTheme.qml`, design px only in `UiMetrics.qml`/`UiTypography.qml`, durations only in `UiMotion.qml`. See `plating/README.md`.
 - `app/ui/`: static QML module `CookbookUi`, the app's own components (recipes, ingredients, shopping), built from Plating's. Presentational: no core (CMake fails if it links it), no models, no formatting. Its design px live in `CookbookMetrics.qml`, its text styles in `CookbookTypography.qml`. See `app/ui/README.md`.
 - `showcase/`: a separate executable showing every Plating and CookbookUi component; links no core. `--capture <folder>` saves each page in both themes as PNG files.
@@ -34,7 +34,7 @@ Personal Android recipe app: Qt 6.12 / QML + C++23, CMake. Build, run and device
 
 - SQLite amalgamation (`third_party/sqlite`; compile options in its README) behind `core/Database.hpp`: `Database`, `Statement`, `Transaction`. Prepared statements with bound parameters only, never SQL built by concatenation (sole exception: `PRAGMA user_version` in the migrator).
 - Schema = `core/schema/NNN_name.sql`, numbered without gaps: the single source of truth, embedded at build time. Each file runs once, in its own transaction, tracked by `PRAGMA user_version`; files must not contain BEGIN/COMMIT. Once a migration has run on a device that matters, never edit it: add a new one.
-- Every table is `STRICT` and has:
+- Every table is `STRICT` and, except the key-value `setting` table (see `docs/schema.md`), has:
   - `id TEXT NOT NULL PRIMARY KEY`: a UUIDv7 from `core::UuidV7Generator`;
   - `modified_at INTEGER NOT NULL`: ms since Unix epoch, UTC, from the injected `core::Clock`; set on every insert and update, including soft delete, restore, and rows shifted by a reorder;
   - `deleted INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0,1))`: soft delete. The app never DELETEs; restore flips it back (that's Undo).

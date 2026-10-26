@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/Aisle.hpp"
+#include "core/Observers.hpp"
 #include "core/UuidV7Generator.hpp"
 #include "core/clock.hpp"
 
@@ -19,6 +20,7 @@ enum class AisleError
 {
   EmptyName,     // blank once trimmed
   DuplicateName, // another live aisle has it, ignoring ASCII case
+  InUse,         // remove(): catalog items are in the aisle
 };
 
 enum class AisleField
@@ -95,8 +97,10 @@ public:
                                                        std::string_view name);
   void setColors(std::string_view id, const ThemedColors& colors);
   void move(int from, int to);
-  // Soft delete: the row stays, flagged deleted, for restore()
-  void remove(std::string_view id);
+  // Soft delete: the row stays, flagged deleted, for restore(). Fails with
+  // InUse while catalog items are in the aisle; ingredients outside the
+  // catalog may keep it, they show under "Other".
+  [[nodiscard]] std::expected<void, AisleError> remove(std::string_view id);
   // Back to the old position, or last if the list got shorter. Fails with
   // DuplicateName if a live aisle took the name meanwhile.
   [[nodiscard]] std::expected<void, AisleError> restore(std::string_view id);
@@ -122,8 +126,7 @@ private:
   Clock m_clock;
   UuidV7Generator m_ids;
   std::vector<Aisle> m_aisles;
-  std::vector<AisleObserver*> m_observers;
-  bool m_notifying = false;
+  Observers<AisleObserver> m_observers;
 };
 
 }

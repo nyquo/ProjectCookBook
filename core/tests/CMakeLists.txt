@@ -3,9 +3,14 @@ add_executable(coreTests
     testSupport.hpp
     aisleStoreTests.cpp
     backendTests.cpp
+    catalogViewTests.cpp
     databaseTests.cpp
+    ingredientStoreTests.cpp
+    listEditsTests.cpp
     migrationsTests.cpp
+    settingStoreTests.cpp
     tagColorStoreTests.cpp
+    textTests.cpp
     themedColorsTests.cpp
     uuidTests.cpp
 )

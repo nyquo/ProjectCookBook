@@ -14,11 +14,19 @@ namespace {
 
 using Names = std::vector<std::string>;
 
+// The seeded catalog leaves its aisles: every aisle can be removed
+core::Database& withoutCatalog(core::Database& db)
+{
+  db.exec("UPDATE ingredient SET in_catalog = 0");
+  return db;
+}
+
 struct Fixture
 {
   test::FakeClock clock;
   core::Database db{ ":memory:" };
-  core::AisleStore store{ test::migrated(db), clock.function() };
+  core::AisleStore store{ withoutCatalog(test::migrated(db)),
+                          clock.function() };
   test::RecordingObserver observer{ store };
 
   std::string idAt(std::size_t index) const
@@ -109,7 +117,7 @@ TEST_CASE_FIXTURE(
 
 TEST_CASE_FIXTURE(Fixture, "A deleted aisle's name can be reused")
 {
-  store.remove(idAt(3));
+  REQUIRE(store.remove(idAt(3)));
   CHECK(store.create("Pantry", test::someColors));
 }
 
@@ -219,7 +227,7 @@ TEST_CASE_FIXTURE(
 TEST_CASE_FIXTURE(Fixture, "remove soft-deletes the aisle and closes the gap")
 {
   const std::string id = idAt(1);
-  store.remove(id);
+  REQUIRE(store.remove(id));
 
   CHECK(test::names(store) == Names{ "Produce", "Meat & fish", "Pantry" });
   CHECK(test::modifiedTimes(store) ==
@@ -236,10 +244,28 @@ TEST_CASE_FIXTURE(Fixture, "remove soft-deletes the aisle and closes the gap")
   CHECK(test::reloadMatches(db, store));
 }
 
+TEST_CASE_FIXTURE(Fixture,
+                  "remove refuses an aisle that holds catalog items, only them")
+{
+  const std::string id = idAt(1);
+  // A catalog item, then an ingredient outside the catalog
+  db.exec("UPDATE ingredient SET in_catalog = 1 WHERE display_name = 'Milk'");
+  const auto rowsBefore = test::aisleRows(db);
+  observer.notifications.clear();
+
+  CHECK(store.remove(id) == std::unexpected(AisleError::InUse));
+  CHECK(test::names(store) == test::seedNames);
+  CHECK(test::aisleRows(db) == rowsBefore);
+  CHECK(observer.notifications.empty());
+
+  db.exec("UPDATE ingredient SET in_catalog = 0 WHERE display_name = 'Milk'");
+  CHECK(store.remove(id));
+}
+
 TEST_CASE_FIXTURE(Fixture, "restore puts the aisle back at its old position")
 {
   const std::string id = idAt(1);
-  store.remove(id);
+  REQUIRE(store.remove(id));
   observer.notifications.clear();
   clock.now += 1min;
 
@@ -258,8 +284,8 @@ TEST_CASE_FIXTURE(Fixture,
                   "restore appends when the old position is past the end")
 {
   const std::string pantry = idAt(3);
-  store.remove(pantry);
-  store.remove(idAt(0));
+  REQUIRE(store.remove(pantry));
+  REQUIRE(store.remove(idAt(0)));
 
   REQUIRE(store.restore(pantry));
 
@@ -271,7 +297,7 @@ TEST_CASE_FIXTURE(Fixture,
                   "restore fails if a live aisle took the name in the meantime")
 {
   const std::string id = idAt(1);
-  store.remove(id);
+  REQUIRE(store.remove(id));
   REQUIRE(store.create("dairy & EGGS", test::someColors));
   const auto rowsBefore = test::aisleRows(db);
   observer.notifications.clear();
@@ -288,7 +314,7 @@ TEST_CASE_FIXTURE(Fixture, "Unknown ids are programming errors")
                   std::invalid_argument);
   CHECK_THROWS_AS(store.setColors("unknown", test::someColors),
                   std::invalid_argument);
-  CHECK_THROWS_AS(store.remove("unknown"), std::invalid_argument);
+  CHECK_THROWS_AS((void)store.remove("unknown"), std::invalid_argument);
   CHECK_THROWS_AS((void)store.restore("unknown"), std::invalid_argument);
   CHECK_THROWS_AS((void)store.restore(idAt(0)),
                   std::invalid_argument); // live, not deleted
@@ -330,12 +356,12 @@ TEST_CASE_FIXTURE(Fixture,
   {
     db.exec("CREATE TRIGGER fail BEFORE UPDATE OF position ON aisle "
             "BEGIN SELECT RAISE(ABORT, 'simulated'); END");
-    checkFailedWriteChangesNothing(*this, [&] { store.remove(idAt(1)); });
+    checkFailedWriteChangesNothing(*this, [&] { (void)store.remove(idAt(1)); });
   }
   SUBCASE("restore, failing at its second statement")
   {
     const std::string id = idAt(1);
-    store.remove(id);
+    REQUIRE(store.remove(id));
     db.exec("CREATE TRIGGER fail BEFORE UPDATE OF deleted ON aisle "
             "BEGIN SELECT RAISE(ABORT, 'simulated'); END");
     checkFailedWriteChangesNothing(*this, [&] { (void)store.restore(id); });

@@ -1,21 +1,17 @@
 #include "AisleListModel.hpp"
 
+#include "Overloaded.hpp"
 #include "appBackend.hpp"
 #include "core/Backend.hpp"
 #include "core/Database.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <expected>
 #include <optional>
 #include <stdexcept>
 #include <utility>
 #include <variant>
-
-template<typename... Handlers>
-struct Overloaded : Handlers...
-{
-  using Handlers::operator()...;
-};
 
 static QColor toQColor(core::Rgb color)
 {
@@ -59,6 +55,8 @@ static AisleListModel::Error toError(core::AisleError error)
       return AisleListModel::Error::EmptyName;
     case core::AisleError::DuplicateName:
       return AisleListModel::Error::DuplicateName;
+    case core::AisleError::InUse:
+      return AisleListModel::Error::InUse;
   }
   std::unreachable();
 }
@@ -88,19 +86,27 @@ static AisleListModel::Error guarded(auto&& action)
 }
 
 AisleListModel::AisleListModel(QObject* parent)
-  : AisleListModel(app::backend().aisles(), parent)
+  : AisleListModel(app::backend().aisles(),
+                   app::backend().ingredients(),
+                   parent)
 {
 }
 
-AisleListModel::AisleListModel(core::AisleStore& store, QObject* parent)
+AisleListModel::AisleListModel(core::AisleStore& store,
+                               core::IngredientStore& ingredients,
+                               QObject* parent)
   : QAbstractListModel(parent)
   , m_store(store)
+  , m_ingredients(ingredients)
+  , m_itemCounts(countItems())
 {
   m_store.addObserver(*this);
+  m_ingredients.addObserver(*this);
 }
 
 AisleListModel::~AisleListModel()
 {
+  m_ingredients.removeObserver(*this);
   m_store.removeObserver(*this);
 }
 
@@ -131,15 +137,20 @@ QVariant AisleListModel::data(const QModelIndex& index, int role) const
       return toQColor(aisle.colors.darkFill);
     case DarkInkRole:
       return toQColor(aisle.colors.darkInk);
+    case ItemCountRole: {
+      const auto it = m_itemCounts.find(aisle.id);
+      return it != m_itemCounts.end() ? it->second : 0;
+    }
   }
   return {};
 }
 
 QHash<int, QByteArray> AisleListModel::roleNames() const
 {
-  return { { AisleIdRole, "aisleId" },   { NameRole, "name" },
-           { FillRole, "fill" },         { InkRole, "ink" },
-           { DarkFillRole, "darkFill" }, { DarkInkRole, "darkInk" } };
+  return { { AisleIdRole, "aisleId" },    { NameRole, "name" },
+           { FillRole, "fill" },          { InkRole, "ink" },
+           { DarkFillRole, "darkFill" },  { DarkInkRole, "darkInk" },
+           { ItemCountRole, "itemCount" } };
 }
 
 AisleListModel::Error AisleListModel::create(const QString& name,
@@ -197,16 +208,27 @@ AisleListModel::Error AisleListModel::remove(int row)
   if (!isValidRow(row)) {
     return Error::InvalidRequest;
   }
-  return guarded([&] {
-    m_store.remove(idAt(row));
-    return Error::NoError;
-  });
+  return guarded([&] { return toError(m_store.remove(idAt(row))); });
 }
 
 AisleListModel::Error AisleListModel::restore(const QString& aisleId)
 {
   return guarded(
     [&] { return toError(m_store.restore(aisleId.toStdString())); });
+}
+
+int AisleListModel::rowOf(const QString& aisleId) const
+{
+  const auto& aisles = m_store.aisles();
+  const auto it =
+    std::ranges::find(aisles, aisleId.toStdString(), &core::Aisle::id);
+  return it != aisles.end() ? static_cast<int>(it - aisles.begin()) : -1;
+}
+
+QString AisleListModel::aisleIdAt(int row) const
+{
+  return row >= 0 && row < rowCount() ? QString::fromStdString(idAt(row))
+                                      : QString();
 }
 
 void AisleListModel::aisleAboutToChange(
@@ -231,8 +253,14 @@ void AisleListModel::aisleAboutToChange(
 void AisleListModel::aisleChanged(const core::AisleChange& change) noexcept
 {
   const Overloaded end{
-    [this](const core::AisleInserted&) { endInsertRows(); },
-    [this](const core::AisleRemoved&) { endRemoveRows(); },
+    [this](const core::AisleInserted&) {
+      endInsertRows();
+      emit countChanged();
+    },
+    [this](const core::AisleRemoved&) {
+      endRemoveRows();
+      emit countChanged();
+    },
     [this](const core::AisleMoved&) { endMoveRows(); },
     [this](const core::AisleUpdated& c) {
       const QList<int> roles =
@@ -243,6 +271,38 @@ void AisleListModel::aisleChanged(const core::AisleChange& change) noexcept
     },
   };
   std::visit(end, change);
+}
+
+void AisleListModel::ingredientAboutToChange(
+  const core::IngredientChange&) noexcept
+{
+}
+
+void AisleListModel::ingredientChanged(const core::IngredientChange&) noexcept
+{
+  std::map<std::string, int, std::less<>> counts = countItems();
+  std::swap(m_itemCounts, counts);
+  const auto countOf = [](const auto& map, const std::string& id) {
+    const auto it = map.find(id);
+    return it != map.end() ? it->second : 0;
+  };
+  for (int row = 0; row < rowCount(); ++row) {
+    const std::string id = idAt(row);
+    if (countOf(m_itemCounts, id) != countOf(counts, id)) {
+      emit dataChanged(index(row), index(row), { ItemCountRole });
+    }
+  }
+}
+
+std::map<std::string, int, std::less<>> AisleListModel::countItems() const
+{
+  std::map<std::string, int, std::less<>> counts;
+  for (const core::Ingredient& ingredient : m_ingredients.ingredients()) {
+    if (ingredient.inCatalog && ingredient.aisleId) {
+      ++counts[*ingredient.aisleId];
+    }
+  }
+  return counts;
 }
 
 // Rows from QML can be stale, e.g. from a delegate in its remove transition
