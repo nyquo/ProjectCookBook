@@ -15,7 +15,8 @@ Backend::Backend(const std::filesystem::path& databasePath, Clock clock)
   , m_tagColors(migrated(m_db))
   , m_settings(m_db, clock)
   , m_aisles(m_db, clock)
-  , m_ingredients(m_db, std::move(clock), m_aisles)
+  , m_ingredients(m_db, clock, m_aisles)
+  , m_tags(m_db, std::move(clock))
 {
 }
 

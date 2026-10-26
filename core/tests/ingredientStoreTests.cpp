@@ -160,6 +160,30 @@ TEST_CASE_FIXTURE(Fixture, "addToCatalog takes an item without an icon")
   CHECK(reloadMatches());
 }
 
+TEST_CASE_FIXTURE(Fixture, "Every unit is stored and read back")
+{
+  const auto id =
+    store.addToCatalog({ "Leeks", aisleId(0), "leaf", { 1, Unit::Pieces } });
+  REQUIRE(id);
+  for (const Unit unit : { Unit::Grams,
+                           Unit::Kilograms,
+                           Unit::Milliliters,
+                           Unit::Centiliters,
+                           Unit::Liters,
+                           Unit::Packs,
+                           Unit::Bunches,
+                           Unit::Ounces,
+                           Unit::Pounds,
+                           Unit::FluidOunces,
+                           Unit::Pieces }) {
+    CAPTURE(core::unitCode(unit));
+    REQUIRE(store.updateCatalogItem(
+      *id, { "Leeks", aisleId(0), "leaf", { 1.5, unit } }));
+    CHECK(core::unitFromCode(core::unitCode(unit)) == unit);
+    REQUIRE(reloadMatches());
+  }
+}
+
 TEST_CASE_FIXTURE(Fixture, "addToCatalog rejects blank names and catalog items")
 {
   const auto before = store.ingredients();

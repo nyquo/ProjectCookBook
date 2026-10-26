@@ -5,11 +5,14 @@ add_executable(coreTests
     backendTests.cpp
     catalogViewTests.cpp
     databaseTests.cpp
+    defaultFiltersTests.cpp
     ingredientStoreTests.cpp
     listEditsTests.cpp
     migrationsTests.cpp
     settingStoreTests.cpp
     tagColorStoreTests.cpp
+    tagStoreTests.cpp
+    tagViewTests.cpp
     textTests.cpp
     themedColorsTests.cpp
     uuidTests.cpp

@@ -62,7 +62,8 @@ CREATE TABLE ingredient (
   aisle_id         TEXT    REFERENCES aisle(id),
   icon             TEXT    CHECK (length(icon) > 0),
   one_tap_quantity REAL    CHECK (one_tap_quantity > 0),
-  one_tap_unit     TEXT    CHECK (one_tap_unit IN ('pcs', 'g', 'kg', 'ml', 'cl', 'l', 'pack', 'bunch')),
+  one_tap_unit     TEXT    CHECK (one_tap_unit IN ('pcs', 'g', 'kg', 'ml', 'cl', 'l', 'pack', 'bunch',
+                                                    'oz', 'lb', 'fl_oz')),
   in_catalog       INTEGER NOT NULL DEFAULT 0 CHECK (in_catalog IN (0,1)),
   modified_at      INTEGER NOT NULL,
   deleted          INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0,1)),
@@ -115,6 +116,20 @@ INSERT INTO ingredient (id, display_name, canonical_name, aisle_id, icon, one_ta
   ('01a11df5-a42b-73bc-bc3c-743c75a0e43e', 'Canned tomatoes', 'canned tomatoes', '01a11df5-a403-79a8-8557-af5e0069fefa', 'can',       2,   'pcs',   1, 1791504000000),
   ('01a11df5-a42c-71fb-8b41-05e533530578', 'Bread',           'bread',           '01a11df5-a403-79a8-8557-af5e0069fefa', 'bread',     1,   'pcs',   1, 1791504000000),
   ('01a11df5-a42d-7237-b9a3-cb5fb5ec0fc9', 'Black pepper',    'black pepper',    '01a11df5-a403-79a8-8557-af5e0069fefa', 'spice',     1,   'pcs',   1, 1791504000000);
+
+-- Tags label recipes. A tag's color is one of the theme's four tag families,
+-- by key: the theme gives its fill and ink. canonical_name is computed by
+-- core::canonicalName(). Rules: docs/schema.md
+CREATE TABLE tag (
+  id             TEXT    NOT NULL PRIMARY KEY,
+  name           TEXT    NOT NULL CHECK (length(trim(name)) > 0),
+  canonical_name TEXT    NOT NULL CHECK (length(canonical_name) > 0),
+  color          TEXT    NOT NULL CHECK (color IN ('mint', 'butter', 'sky', 'peach')),
+  modified_at    INTEGER NOT NULL,
+  deleted        INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0,1))
+) STRICT;
+
+CREATE UNIQUE INDEX tag_canonical_name_live ON tag(canonical_name) WHERE deleted = 0;
 
 -- The app's settings, by key, e.g. theme = 'dark'. Values are language-neutral
 -- codes, never translated text. Unlike the other tables, no id and no deleted

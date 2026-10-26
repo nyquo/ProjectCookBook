@@ -17,6 +17,7 @@ qt_add_qml_module(cookbookui
     # Gives qmlcachegen Plating's import path, so it compiles typed code
     DEPENDENCIES TARGET plating
     QML_FILES
+        AddField.qml
         AisleEditRow.qml
         AisleForm.qml
         AislesButton.qml
@@ -41,6 +42,7 @@ qt_add_qml_module(cookbookui
         ShoppingItem.qml
         SortMenu.qml
         StepCard.qml
+        TagEditRow.qml
     # Icons: see CookbookIcons.qml and IngredientIcons.qml
     RESOURCES
         icons/ingredients/apple.svg

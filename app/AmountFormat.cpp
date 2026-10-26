@@ -54,6 +54,13 @@ QString app::formatAmount(const core::Amount& amount)
       return QCoreApplication::translate("AmountFormat", "%1 cl").arg(number);
     case core::Unit::Liters:
       return QCoreApplication::translate("AmountFormat", "%1 l").arg(number);
+    case core::Unit::Ounces:
+      return QCoreApplication::translate("AmountFormat", "%1 oz").arg(number);
+    case core::Unit::Pounds:
+      return QCoreApplication::translate("AmountFormat", "%1 lb").arg(number);
+    case core::Unit::FluidOunces:
+      return QCoreApplication::translate("AmountFormat", "%1 fl oz")
+        .arg(number);
   }
   std::unreachable();
 }
@@ -97,6 +104,12 @@ QString AmountFormat::unitLabel(const QString& unit) const
       return tr("pack");
     case core::Unit::Bunches:
       return tr("bunch");
+    case core::Unit::Ounces:
+      return tr("oz");
+    case core::Unit::Pounds:
+      return tr("lb");
+    case core::Unit::FluidOunces:
+      return tr("fl oz");
   }
   std::unreachable();
 }

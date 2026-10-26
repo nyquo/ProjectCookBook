@@ -3,9 +3,11 @@
 #include "core/Observers.hpp"
 #include "core/clock.hpp"
 
+#include <cstddef>
 #include <functional>
 #include <map>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 
@@ -40,6 +42,16 @@ public:
   // No write if the value doesn't change. Throws std::invalid_argument for an
   // empty key, std::logic_error from inside a notification.
   void setValue(std::string_view key, std::string_view value);
+
+  // A setting that takes one of `codes`: the stored code's index, or 0, the
+  // default, when unset or another value (e.g. written by a newer version)
+  std::size_t codeIndex(std::string_view key,
+                        std::span<const std::string_view> codes) const;
+
+  // An on/off setting, stored as "true" or "false"; `fallback` when unset or
+  // another value
+  bool flag(std::string_view key, bool fallback) const;
+  void setFlag(std::string_view key, bool on);
 
   // Not owned: an observer must unregister before it's destroyed
   void addObserver(SettingObserver& observer);

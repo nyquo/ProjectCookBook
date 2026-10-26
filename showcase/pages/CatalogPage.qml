@@ -17,10 +17,33 @@ GroupPage {
     ]
     property int dotIndex: 0
     property string icon: "carrot"
+    // The TagEditRow sample that's open, or -1
+    property int openTag: 0
 
     // Aisles with both variants of their colors, as AisleListModel gives them
     ListModel {
         id: aisles
+    }
+
+    // Tags with an index in `colors`
+    ListModel {
+        id: tags
+
+        ListElement {
+            name: qsTr("Brunch")
+            colorIndex: 3
+            count: 3
+        }
+        ListElement {
+            name: qsTr("Vegetarian")
+            colorIndex: 0
+            count: 1
+        }
+        ListElement {
+            name: qsTr("Weeknight")
+            colorIndex: 2
+            count: 0
+        }
     }
 
     Component.onCompleted: {
@@ -47,7 +70,7 @@ GroupPage {
     ]
 
     title: qsTr("Catalog and settings")
-    subtitle: qsTr("Card, IconDiscStack, AislesButton, ColorDot, ColorMenu, AisleForm, AisleEditRow, IngredientIconGrid")
+    subtitle: qsTr("Card, IconDiscStack, AislesButton, ColorDot, ColorMenu, AisleForm, AisleEditRow, AddField, TagEditRow, IngredientIconGrid")
 
     Specimen {
         title: qsTr("Card")
@@ -108,7 +131,7 @@ GroupPage {
 
     Specimen {
         title: qsTr("ColorDot and ColorMenu")
-        note: qsTr("Smaller than ColorSwatch: 44 targets, 30 discs, ringed when checked. ColorMenu shows them in a menu.")
+        note: qsTr("Smaller than ColorSwatch: 44 targets, 30 discs, ringed when checked. Large: 48 discs, with a check. ColorMenu shows them in a menu.")
 
         Row {
             Repeater {
@@ -118,6 +141,23 @@ GroupPage {
                     required property var modelData
                     required property int index
 
+                    text: modelData.name
+                    family: modelData.family
+                    checked: index === page.dotIndex
+                    onClicked: page.dotIndex = index
+                }
+            }
+        }
+
+        Row {
+            Repeater {
+                model: page.colors
+
+                delegate: ColorDot {
+                    required property var modelData
+                    required property int index
+
+                    size: ColorDot.Large
                     text: modelData.name
                     family: modelData.family
                     checked: index === page.dotIndex
@@ -199,6 +239,67 @@ GroupPage {
                     onMoveUpClicked: aisles.move(row.index, row.index - 1, 1)
                     onMoveDownClicked: aisles.move(row.index, row.index + 1, 1)
                     onDeleteClicked: ShowcaseState.notify(qsTr("%1 deleted").arg(row.name), () => {})
+                }
+            }
+        }
+    }
+
+    Specimen {
+        title: qsTr("AddField")
+        note: qsTr("A pill field with an accent + inside, off while the field is blank. The + and Enter emit addClicked(); the field keeps focus.")
+
+        AddField {
+            id: addField
+
+            width: parent.width
+            placeholderText: qsTr("New tag")
+            actionText: qsTr("Add tag")
+            onAddClicked: {
+                tags.append({ name: addField.text.trim(), colorIndex: tags.count % 4, count: 0 })
+                addField.clear()
+            }
+        }
+    }
+
+    Specimen {
+        title: qsTr("TagEditRow")
+        note: qsTr("In a ListGroup, one open at a time. Closed: the tag's pill, its recipes and a chevron. Open: its name, its color, Delete and Done.")
+
+        ListGroup {
+            width: parent.width
+            leftPadding: CookbookMetrics.tagsListPaddingH
+            rightPadding: CookbookMetrics.tagsListPaddingH
+
+            Repeater {
+                model: tags
+
+                delegate: TagEditRow {
+                    id: tagRow
+
+                    required property int index
+                    required name
+                    required colorIndex
+                    required property int count
+
+                    family: page.colors[tagRow.colorIndex].family
+                    countText: tagRow.count === 1 ? qsTr("1 recipe") : qsTr("%1 recipes").arg(tagRow.count)
+                    usageText: tagRow.count === 0 ? qsTr("Not used by any recipe")
+                                                  : tagRow.count === 1 ? qsTr("Used by 1 recipe")
+                                                                       : qsTr("Used by %1 recipes").arg(tagRow.count)
+                    open: tagRow.index === page.openTag
+                    colors: page.colors
+                    onOpenClicked: page.openTag = tagRow.index
+                    onRenamed: name => {
+                        if (name.trim() !== "")
+                            tags.setProperty(tagRow.index, "name", name.trim())
+                    }
+                    onColorClicked: index => tags.setProperty(tagRow.index, "colorIndex", index)
+                    onDeleteClicked: {
+                        ShowcaseState.notify(qsTr("“%1” deleted").arg(tagRow.name), () => {})
+                        page.openTag = -1
+                        tags.remove(tagRow.index)
+                    }
+                    onDoneClicked: page.openTag = -1
                 }
             }
         }

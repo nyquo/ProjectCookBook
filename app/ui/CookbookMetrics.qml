@@ -129,10 +129,26 @@ QtObject {
     readonly property real aislesButtonDotOverlap: UiMetrics.space1
     readonly property real aislesButtonDotRing: UiScaler.scale(2)
 
-    // ColorDot: touch target, disc, selection ring
+    // ColorDot: touch target, disc, selection ring (2 wide, 3 outside the
+    // disc). Large: disc, ring and touch target, check.
     readonly property real colorDotTarget: UiMetrics.sizeTouch
     readonly property real colorDotDisc: UiScaler.scale(30)
     readonly property real colorDotRing: UiScaler.scale(40)
+    readonly property real colorDotDiscL: UiMetrics.sizeControlVisual
+    readonly property real colorDotRingL: UiScaler.scale(58)
+    readonly property real colorDotCheckL: UiMetrics.iconL
+
+    // TagEditRow: closed height, chevron; the open panel's margin above and
+    // below, radius, padding and gap; the name field, the delete icon
+    readonly property real tagRowHeight: UiScaler.scale(58)
+    readonly property real tagRowChevron: UiMetrics.iconS
+    readonly property real tagPanelMarginV: UiMetrics.space2
+    readonly property real tagPanelRadius: UiMetrics.radiusMd
+    readonly property real tagPanelPaddingV: UiScaler.scale(14)
+    readonly property real tagPanelPaddingH: UiMetrics.space3
+    readonly property real tagPanelGap: UiScaler.scale(14)
+    readonly property real tagNameFieldHeight: UiMetrics.sizeControlVisual
+    readonly property real tagDeleteIcon: UiMetrics.iconM
 
     // AisleForm: padding, gap between its rows
     readonly property real aisleFormPadding: UiMetrics.space4
@@ -154,6 +170,28 @@ QtObject {
     readonly property real settingsRowGap: UiScaler.scale(18)
     readonly property real settingsLabelGap: UiMetrics.space3
     readonly property real accentSwatch: UiScaler.scale(52)
+    // Between the parts of the Units card
+    readonly property real settingsUnitsGap: UiScaler.scale(10)
+    // The default filters card: top padding (its first row is tall already),
+    // gap between its parts, between tag chips
+    readonly property real settingsFiltersPaddingTop: UiMetrics.space1
+    readonly property real settingsFiltersGap: UiMetrics.space3
+    readonly property real settingsTagGap: UiMetrics.space2
+    // A recipe field's row
+    readonly property real settingsFieldRowHeight: UiMetrics.listRowHeight
+    // A caption under a card: gap above, side inset
+    readonly property real settingsCaptionGap: UiMetrics.space2
+    readonly property real settingsCaptionInset: UiMetrics.sectionHeaderInset
+    readonly property real settingsChevron: UiMetrics.iconS
+
+    // Tags screen: the header's padding, the gaps between its parts, title to
+    // subtitle; the list card's distance to the header and padding
+    readonly property real tagsHeaderPadding: UiMetrics.space4
+    readonly property real tagsHeaderGap: UiScaler.scale(14)
+    readonly property real tagsSubtitleGap: UiScaler.scale(6)
+    readonly property real tagsListTop: UiMetrics.space3
+    readonly property real tagsListPaddingV: UiMetrics.space1
+    readonly property real tagsListPaddingH: UiMetrics.space3
 
     // Catalog: between the header's parts; between aisle blocks; the edit icon
     // on a row; the floating button's distance to the right edge and above the

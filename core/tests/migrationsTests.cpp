@@ -377,3 +377,53 @@ TEST_CASE("The setting table itself rejects invalid rows")
   CHECK(insert("theme") == SQLITE_OK);
   CHECK(insert("theme") == SQLITE_CONSTRAINT_PRIMARYKEY);
 }
+
+TEST_CASE("The first migration creates no tags")
+{
+  core::Database db(":memory:");
+  core::migrate(db);
+  core::Statement count = db.prepare("SELECT count(*) FROM tag");
+  REQUIRE(count.step());
+  CHECK(count.columnInt64(0) == 0);
+}
+
+TEST_CASE("The tag table itself rejects invalid rows")
+{
+  core::Database db(":memory:");
+  core::migrate(db);
+  const auto insert = [&](std::string_view id,
+                          std::string_view name,
+                          std::string_view canonicalName,
+                          std::string_view color,
+                          int deleted) {
+    return test::errorCode([&] {
+      db.prepare("INSERT INTO tag (id, name, canonical_name, color, "
+                 "modified_at, deleted) VALUES (?1, ?2, ?3, ?4, 0, ?5)")
+        .bind(1, id)
+        .bind(2, name)
+        .bind(3, canonicalName)
+        .bind(4, color)
+        .bind(5, deleted)
+        .run();
+    });
+  };
+
+  CHECK(insert("a", " ", "x", "mint", 0) == SQLITE_CONSTRAINT_CHECK);
+  CHECK(insert("b", "Brunch", "", "mint", 0) == SQLITE_CONSTRAINT_CHECK);
+  for (const char* color : { "", "rose", "Mint", "MINT" }) {
+    CAPTURE(color);
+    CHECK(insert("c", "Brunch", "brunch", color, 0) == SQLITE_CONSTRAINT_CHECK);
+  }
+  CHECK(insert("d", "Brunch", "brunch", "mint", 2) == SQLITE_CONSTRAINT_CHECK);
+
+  for (const char* color : { "mint", "butter", "sky", "peach" }) {
+    CAPTURE(color);
+    CHECK(insert(color, color, color, color, 0) == SQLITE_OK);
+  }
+  CHECK(insert("e", "Brunch", "brunch", "mint", 0) == SQLITE_OK);
+  CHECK(insert("e", "Lunch", "lunch", "mint", 0) ==
+        SQLITE_CONSTRAINT_PRIMARYKEY);
+  CHECK(insert("f", "BRUNCH", "brunch", "sky", 0) == SQLITE_CONSTRAINT_UNIQUE);
+  CHECK(insert("g", "Brunch", "brunch", "sky", 1) ==
+        SQLITE_OK); // deleted rows don't count
+}

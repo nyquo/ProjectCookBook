@@ -14,11 +14,14 @@ enum class Unit
   Centiliters,
   Liters,
   Packs,
-  Bunches
+  Bunches,
+  Ounces,
+  Pounds,
+  FluidOunces
 };
 
 // The language-neutral code tables store: "pcs", "g", "kg", "ml", "cl", "l",
-// "pack", "bunch"
+// "pack", "bunch", "oz", "lb", "fl_oz"
 std::string_view unitCode(Unit unit);
 std::optional<Unit> unitFromCode(std::string_view code);
 

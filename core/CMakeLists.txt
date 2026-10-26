@@ -6,17 +6,24 @@ add_library(core STATIC
     Backend.hpp Backend.cpp
     catalogView.hpp catalogView.cpp
     clock.hpp
+    cooking.hpp cooking.cpp
     Database.hpp Database.cpp
+    defaultFilters.hpp defaultFilters.cpp
     Ingredient.hpp
     IngredientStore.hpp IngredientStore.cpp
     listEdits.hpp listEdits.cpp
     migrations.hpp migrations.cpp
     Observers.hpp
+    recipeFields.hpp recipeFields.cpp
     SettingStore.hpp SettingStore.cpp
+    Tag.hpp Tag.cpp
     TagColor.hpp
     TagColorStore.hpp TagColorStore.cpp
+    TagStore.hpp TagStore.cpp
+    tagView.hpp tagView.cpp
     text.hpp text.cpp
     ThemedColors.hpp ThemedColors.cpp
+    unitSystem.hpp unitSystem.cpp
     UuidV7Generator.hpp UuidV7Generator.cpp
 )
 

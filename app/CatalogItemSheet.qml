@@ -35,17 +35,32 @@ BottomSheet {
         }
         return { fill: sheet.theme.bg, ink: sheet.theme.inkMuted }
     }
-    // For QuantityField; `initial` is the amount a unit of another kind starts at
-    readonly property var units: [
+    // Every unit, for QuantityField; `initial` is the amount a unit of another
+    // kind starts at. US units have kinds of their own: switching between
+    // systems starts over rather than leaving 8.818 oz.
+    readonly property var unitData: [
         { key: "pcs", label: AmountFormat.unitLabel("pcs"), step: 1, kind: "", factor: 1, initial: 1 },
         { key: "g", label: AmountFormat.unitLabel("g"), step: 50, kind: "mass", factor: 1, initial: 250 },
         { key: "kg", label: AmountFormat.unitLabel("kg"), step: 0.25, kind: "mass", factor: 1000, initial: 1 },
         { key: "ml", label: AmountFormat.unitLabel("ml"), step: 50, kind: "volume", factor: 1, initial: 250 },
         { key: "cl", label: AmountFormat.unitLabel("cl"), step: 5, kind: "volume", factor: 10, initial: 20 },
         { key: "l", label: AmountFormat.unitLabel("l"), step: 0.25, kind: "volume", factor: 1000, initial: 1 },
+        { key: "oz", label: AmountFormat.unitLabel("oz"), step: 1, kind: "usMass", factor: 1, initial: 8 },
+        { key: "lb", label: AmountFormat.unitLabel("lb"), step: 0.25, kind: "usMass", factor: 16, initial: 1 },
+        { key: "fl_oz", label: AmountFormat.unitLabel("fl_oz"), step: 2, kind: "usVolume", factor: 1, initial: 8 },
         { key: "pack", label: AmountFormat.unitLabel("pack"), step: 1, kind: "", factor: 1, initial: 1 },
         { key: "bunch", label: AmountFormat.unitLabel("bunch"), step: 1, kind: "", factor: 1, initial: 1 }
     ]
+    // The item's stored unit while the unit system doesn't offer it (250 g in
+    // US), until the user picks another; "" otherwise
+    property string extraUnit
+    // The unit system's units, then the extra one
+    readonly property var units: {
+        const keys = Array.from(UnitSettings.unitChoices)
+        if (sheet.extraUnit !== "")
+            keys.push(sheet.extraUnit)
+        return keys.map(key => sheet.unitData.find(u => u.key === key)).filter(u => u !== undefined)
+    }
 
     // The item left the catalog; the caller can offer to undo it
     signal removed(string ingredientId, string name)
@@ -109,6 +124,7 @@ BottomSheet {
         sheet.icon = icon
         sheet.quantity = quantity
         sheet.unit = unit
+        sheet.extraUnit = UnitSettings.unitChoices.includes(unit) ? "" : unit
         sheet.addingAisle = false
         aisleForm.name = ""
         form.contentY = 0
@@ -116,13 +132,14 @@ BottomSheet {
     }
 
     function chooseUnit(unit: string, amount: real) {
-        const from = sheet.units.find(u => u.key === sheet.unit)
-        const to = sheet.units.find(u => u.key === unit)
+        const from = sheet.unitData.find(u => u.key === sheet.unit)
+        const to = sheet.unitData.find(u => u.key === unit)
         // QuantityField converts within a kind and keeps the number across
         // kinds, where 250 g would become 250 pieces
         const sameKind = to.kind !== "" && to.kind === from?.kind
         sheet.unit = unit
         sheet.quantity = sameKind ? amount : to.initial
+        sheet.extraUnit = ""
     }
 
     function save() {

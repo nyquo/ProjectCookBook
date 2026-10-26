@@ -3,6 +3,7 @@
 #include "AmountFormat.hpp"
 #include "Overloaded.hpp"
 #include "appBackend.hpp"
+#include "collation.hpp"
 #include "core/Backend.hpp"
 #include "core/Database.hpp"
 #include "core/catalogView.hpp"
@@ -102,9 +103,8 @@ CatalogListModel::CatalogListModel(core::AisleStore& aisles,
   : QAbstractListModel(parent)
   , m_aisles(aisles)
   , m_ingredients(ingredients)
+  , m_collator(app::nameCollator())
 {
-  m_collator.setCaseSensitivity(Qt::CaseInsensitive);
-  m_collator.setNumericMode(true);
   m_rows = computeRows();
   m_aisles.addObserver(*this);
   m_ingredients.addObserver(*this);
@@ -302,12 +302,7 @@ std::vector<CatalogListModel::Row> CatalogListModel::computeRows() const
     ingredients,
     m_searchText.toStdString(),
     filter.empty() ? std::nullopt : std::optional<std::string_view>(filter),
-    [this](std::string_view a, std::string_view b) {
-      return m_collator.compare(
-               QString::fromUtf8(a.data(), static_cast<qsizetype>(a.size())),
-               QString::fromUtf8(b.data(), static_cast<qsizetype>(b.size()))) <
-             0;
-    });
+    app::nameLess(m_collator));
 
   std::vector<Row> rows;
   rows.reserve(entries.size());

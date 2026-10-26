@@ -36,4 +36,17 @@ QtObject {
             return ""
         }
     }
+
+    function tag(error: int): string {
+        switch (error) {
+        case TagListModel.Error.EmptyName:
+            return qsTr("A tag needs a name.")
+        case TagListModel.Error.DuplicateName:
+            return qsTr("A tag with this name already exists.")
+        case TagListModel.Error.StorageFailed:
+            return qsTr("Couldn't save the change.")
+        default:
+            return ""
+        }
+    }
 }

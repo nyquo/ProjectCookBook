@@ -2,8 +2,8 @@
 
 #include "core/Aisle.hpp"
 #include "core/Ingredient.hpp"
+#include "core/text.hpp"
 
-#include <functional>
 #include <optional>
 #include <string_view>
 #include <vector>
@@ -19,9 +19,6 @@ struct CatalogEntry
 
   bool operator==(const CatalogEntry&) const = default;
 };
-
-// Orders display names, e.g. by the user's locale
-using NameLess = std::function<bool(std::string_view, std::string_view)>;
 
 // The catalog items to show: grouped by aisle in the aisles' order, "Other"
 // last, and by name within a group (ties by id). `search` keeps the items

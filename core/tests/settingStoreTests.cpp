@@ -1,5 +1,8 @@
 #include "core/SettingStore.hpp"
 #include "core/appearance.hpp"
+#include "core/cooking.hpp"
+#include "core/recipeFields.hpp"
+#include "core/unitSystem.hpp"
 #include "testSupport.hpp"
 
 #include <doctest/doctest.h>
@@ -7,6 +10,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace std::chrono_literals;
@@ -177,4 +181,102 @@ TEST_CASE_FIXTURE(Fixture,
 
   CHECK(core::themeMode(store) == core::ThemeMode::System);
   CHECK(core::accent(store) == core::Accent::Raspberry);
+}
+
+TEST_CASE_FIXTURE(Fixture, "A flag is stored as true or false")
+{
+  CHECK(store.flag("keep_screen_on", true));
+  CHECK_FALSE(store.flag("keep_screen_on", false));
+
+  store.setFlag("keep_screen_on", false);
+  CHECK(store.value("keep_screen_on") == "false");
+  CHECK_FALSE(store.flag("keep_screen_on", true));
+
+  store.setFlag("keep_screen_on", true);
+  CHECK(store.value("keep_screen_on") == "true");
+  CHECK(store.flag("keep_screen_on", false));
+}
+
+TEST_CASE_FIXTURE(Fixture, "A flag with another value takes its fallback")
+{
+  for (const char* value : { "", "1", "yes", "True" }) {
+    CAPTURE(value);
+    store.setValue("keep_screen_on", value);
+    CHECK(store.flag("keep_screen_on", true));
+    CHECK_FALSE(store.flag("keep_screen_on", false));
+  }
+}
+
+TEST_CASE_FIXTURE(Fixture, "The unit system defaults to metric")
+{
+  CHECK(core::unitSystem(store) == core::UnitSystem::Metric);
+
+  core::setUnitSystem(store, core::UnitSystem::Us);
+  CHECK(store.value("unit_system") == "us");
+  CHECK(core::unitSystem(store) == core::UnitSystem::Us);
+
+  core::setUnitSystem(store, core::UnitSystem::Metric);
+  CHECK(store.value("unit_system") == "metric");
+
+  store.setValue("unit_system", "imperial");
+  CHECK(core::unitSystem(store) == core::UnitSystem::Metric);
+}
+
+TEST_CASE("Each unit system offers its own units")
+{
+  using core::Unit;
+  const auto choices = [](core::UnitSystem system) {
+    const auto units = core::unitChoices(system);
+    return std::vector<Unit>(units.begin(), units.end());
+  };
+
+  CHECK(choices(core::UnitSystem::Metric) == std::vector{ Unit::Pieces,
+                                                          Unit::Grams,
+                                                          Unit::Kilograms,
+                                                          Unit::Milliliters,
+                                                          Unit::Centiliters,
+                                                          Unit::Liters,
+                                                          Unit::Packs,
+                                                          Unit::Bunches });
+  CHECK(choices(core::UnitSystem::Us) == std::vector{ Unit::Pieces,
+                                                      Unit::Ounces,
+                                                      Unit::Pounds,
+                                                      Unit::FluidOunces,
+                                                      Unit::Packs,
+                                                      Unit::Bunches });
+}
+
+TEST_CASE_FIXTURE(Fixture, "Every recipe field is shown by default")
+{
+  using core::RecipeField;
+  const std::vector<std::pair<RecipeField, std::string>> fields{
+    { RecipeField::Cost, "show_cost" },
+    { RecipeField::Times, "show_times" },
+    { RecipeField::StepAmounts, "show_step_amounts" },
+    { RecipeField::CookingHistory, "show_cooking_history" },
+    { RecipeField::Source, "show_source" },
+    { RecipeField::Notes, "show_notes" },
+  };
+  for (const auto& [field, key] : fields) {
+    CAPTURE(key);
+    CHECK(core::recipeFieldShown(store, field));
+
+    core::setRecipeFieldShown(store, field, false);
+    CHECK(store.value(key) == "false");
+    CHECK_FALSE(core::recipeFieldShown(store, field));
+  }
+
+  // Each field has its own key
+  core::setRecipeFieldShown(store, RecipeField::Notes, true);
+  CHECK(core::recipeFieldShown(store, RecipeField::Notes));
+  CHECK_FALSE(core::recipeFieldShown(store, RecipeField::Source));
+}
+
+TEST_CASE_FIXTURE(Fixture, "Keep screen on is on by default")
+{
+  CHECK(core::keepScreenOn(store));
+
+  core::setKeepScreenOn(store, false);
+  CHECK(store.value("keep_screen_on") == "false");
+  CHECK_FALSE(core::keepScreenOn(store));
 }

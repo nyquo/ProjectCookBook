@@ -8,7 +8,7 @@ The app's own components, about recipes, ingredients and shopping: a static QML 
 | Recipes | `RecipeHeader`, `RecipeRow`, `PlannedRecipeCard`, `SortMenu`, `NoteCard` |
 | Ingredients and steps | `IngredientRow`, `StepCard` |
 | Shopping | `ShoppingItem`, `IngredientTile` |
-| Catalog and settings | `Card`, `IconDiscStack`, `AislesButton`, `ColorDot`, `ColorMenu`, `AisleForm`, `AisleEditRow`, `IngredientIconGrid` |
+| Catalog and settings | `Card`, `IconDiscStack`, `AislesButton`, `ColorDot`, `ColorMenu`, `AisleForm`, `AisleEditRow`, `IngredientIconGrid`, `AddField`, `TagEditRow` |
 
 Their design px are in `CookbookMetrics.qml`, their own text styles in `CookbookTypography.qml`, the app's own durations in `CookbookMotion.qml`; everything else comes from Plating's theme.
 
@@ -28,5 +28,7 @@ To add one, put `<name>.svg` in its folder, then list it in `CMakeLists.txt` (`R
 - `QuantityField` steps and converts with the unit data it's given (`units`: key, label, step, kind, factor), and emits `amountEdited()` and `unitEdited()`: the caller formats the amount and the summary. `header: false` drops its "Quantity" header, for a caller that labels the card itself.
 - `SortMenu` builds the hint "Tap again for …" by lowercasing the other label's first letter, which suits English and French labels.
 - `StepCard` lays its text out as a flow of words, so a mention can be a token that wraps with the words around it. The cost: lines break only at spaces (no hyphenation), and the text can't be selected. The card exposes the whole text to screen readers.
-- `ColorDot`, `IngredientIconGrid` and the controls of `AisleEditRow` are controlled: they emit what was clicked and show what they're given.
+- `ColorDot`, `IngredientIconGrid` and the controls of `AisleEditRow` and `TagEditRow` are controlled: they emit what was clicked and show what they're given. `ColorDot.Large` is the tags editor's 48 disc, with a check when checked.
 - `AislesButton` takes a model with `ink` and `darkInk` roles, like `AisleListModel`; its first three rows give the dots.
+- `AddField` is Plating's `TextField` with its own + inside, because the field's Submit action can't take an accessible name ("Add tag") or be turned off while the field is blank.
+- `TagEditRow` takes the tag's family resolved for the theme, like the other components: the app maps the key the database stores (`mint`…) to the theme's tag family.

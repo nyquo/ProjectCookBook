@@ -54,6 +54,39 @@ void SettingStore::setValue(std::string_view key, std::string_view value)
     [&](SettingObserver& observer) { observer.settingChanged(key); });
 }
 
+std::size_t SettingStore::codeIndex(
+  std::string_view key,
+  std::span<const std::string_view> codes) const
+{
+  const auto it = m_values.find(key);
+  for (std::size_t i = 0; it != m_values.end() && i < codes.size(); ++i) {
+    if (codes[i] == it->second) {
+      return i;
+    }
+  }
+  return 0;
+}
+
+bool SettingStore::flag(std::string_view key, bool fallback) const
+{
+  const auto it = m_values.find(key);
+  if (it == m_values.end()) {
+    return fallback;
+  }
+  if (it->second == "true") {
+    return true;
+  }
+  if (it->second == "false") {
+    return false;
+  }
+  return fallback;
+}
+
+void SettingStore::setFlag(std::string_view key, bool on)
+{
+  setValue(key, on ? "true" : "false");
+}
+
 void SettingStore::addObserver(SettingObserver& observer)
 {
   m_observers.add(observer);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <string>
 #include <string_view>
 
@@ -15,5 +16,8 @@ std::string_view trimmed(std::string_view text);
 // whitespace and typographic apostrophes as "'". Other characters stay as they
 // are: Greek or Cyrillic capitals don't fold. Invalid UTF-8 bytes are kept.
 std::string canonicalName(std::string_view name);
+
+// Orders display names, e.g. by the user's locale
+using NameLess = std::function<bool(std::string_view, std::string_view)>;
 
 }

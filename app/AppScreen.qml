@@ -14,6 +14,9 @@ FocusScope {
     // What the snackbar keeps clear of at the bottom: the bottom bar, a
     // floating button
     property real snackbarOffset: 0
+    // Asks to keep the display awake while this screen is on top, if the
+    // user's Keep screen on setting allows it (a recipe being cooked)
+    property bool keepScreenOn: false
 
     default property alias content: body.data
 
@@ -21,6 +24,12 @@ FocusScope {
     // that runs `action`
     function notify(message: string, actionText: string, action: var) {
         (screen.Window.window as Main)?.notify(message, actionText, action)
+    }
+
+    // Released as soon as another screen is pushed over this one
+    KeepScreenOn {
+        active: screen.keepScreenOn && (screen.StackView.status === StackView.Active
+                                        || screen.StackView.status === StackView.Activating)
     }
 
     Rectangle {

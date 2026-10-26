@@ -21,25 +21,10 @@ static constexpr std::array<std::string_view, 5> accentCodes{ "raspberry",
                                                               "saffron",
                                                               "basil" };
 
-// The stored value's index in `codes`, or 0, the default
-template<std::size_t size>
-static std::size_t storedIndex(const SettingStore& settings,
-                               std::string_view key,
-                               const std::array<std::string_view, size>& codes)
-{
-  const std::optional<std::string> value = settings.value(key);
-  for (std::size_t i = 0; value && i < size; ++i) {
-    if (codes[i] == *value) {
-      return i;
-    }
-  }
-  return 0;
-}
-
 ThemeMode themeMode(const SettingStore& settings)
 {
   return static_cast<ThemeMode>(
-    storedIndex(settings, themeModeKey, themeModeCodes));
+    settings.codeIndex(themeModeKey, themeModeCodes));
 }
 
 void setThemeMode(SettingStore& settings, ThemeMode mode)
@@ -49,7 +34,7 @@ void setThemeMode(SettingStore& settings, ThemeMode mode)
 
 Accent accent(const SettingStore& settings)
 {
-  return static_cast<Accent>(storedIndex(settings, accentKey, accentCodes));
+  return static_cast<Accent>(settings.codeIndex(accentKey, accentCodes));
 }
 
 void setAccent(SettingStore& settings, Accent accent)
