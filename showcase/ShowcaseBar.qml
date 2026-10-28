@@ -14,7 +14,7 @@ Rectangle {
     implicitHeight: bar.SafeArea.margins.top + flick.height + UiMetrics.hairline
     color: bar.theme.surface
 
-    Flickable {
+    ScrollArea {
         id: flick
 
         y: bar.SafeArea.margins.top
@@ -22,8 +22,7 @@ Rectangle {
         width: parent.width - bar.SafeArea.margins.left - bar.SafeArea.margins.right
         height: row.implicitHeight + 2 * UiMetrics.space1
         contentWidth: row.implicitWidth + 2 * UiMetrics.space4
-        flickableDirection: Flickable.HorizontalFlick
-        boundsBehavior: Flickable.StopAtBounds
+        orientation: Qt.Horizontal
         clip: true
 
         RowLayout {

@@ -48,12 +48,13 @@ AppScreen {
     function revealOpenRow() {
         if (!screen.openRow)
             return
-        const top = screen.openRow.mapToItem(flick.contentItem, 0, 0).y
+        const view = scroller.flickable
+        const top = screen.openRow.mapToItem(view.contentItem, 0, 0).y
         const bottom = top + screen.openRow.height
-        if (bottom > flick.contentY + flick.height)
-            flick.contentY = Math.max(0, Math.min(bottom - flick.height, flick.contentHeight - flick.height))
-        if (top < flick.contentY)
-            flick.contentY = Math.max(0, top)
+        if (bottom > view.contentY + view.height)
+            scroller.scrollTo(bottom - view.height)
+        if (top < view.contentY)
+            scroller.scrollTo(top)
     }
 
     TagListModel {
@@ -115,14 +116,13 @@ AppScreen {
             }
         }
 
-        Flickable {
-            id: flick
+        ScrollArea {
+            id: scroller
 
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.topMargin: CookbookMetrics.tagsListTop
             contentHeight: list.visible ? list.height + UiMetrics.space8 + screen.SafeArea.margins.bottom : 0
-            boundsBehavior: Flickable.StopAtBounds
             clip: true
             // The list lays out after the open row grows
             onContentHeightChanged: screen.revealOpenRow()
@@ -131,7 +131,7 @@ AppScreen {
                 id: list
 
                 x: screen.sideMargin + screen.SafeArea.margins.left
-                width: flick.width - 2 * screen.sideMargin - screen.SafeArea.margins.left
+                width: scroller.width - 2 * screen.sideMargin - screen.SafeArea.margins.left
                        - screen.SafeArea.margins.right
                 visible: tagModel.count > 0
                 topPadding: CookbookMetrics.tagsListPaddingV

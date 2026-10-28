@@ -63,7 +63,8 @@ CREATE TABLE ingredient (
   icon             TEXT    CHECK (length(icon) > 0),
   one_tap_quantity REAL    CHECK (one_tap_quantity > 0),
   one_tap_unit     TEXT    CHECK (one_tap_unit IN ('pcs', 'g', 'kg', 'ml', 'cl', 'l', 'pack', 'bunch',
-                                                    'oz', 'lb', 'fl_oz')),
+                                                    'oz', 'lb', 'fl_oz', 'tsp', 'tbsp', 'cup',
+                                                    'clove', 'pinch', 'can')),
   in_catalog       INTEGER NOT NULL DEFAULT 0 CHECK (in_catalog IN (0,1)),
   modified_at      INTEGER NOT NULL,
   deleted          INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0,1)),
@@ -130,6 +131,98 @@ CREATE TABLE tag (
 ) STRICT;
 
 CREATE UNIQUE INDEX tag_canonical_name_live ON tag(canonical_name) WHERE deleted = 0;
+
+-- Recipes. Optional fields are NULL when empty, never blank. Deleting a
+-- recipe flags only this row: its child rows below stay as they were, for
+-- Undo. Rules: docs/schema.md
+CREATE TABLE recipe (
+  id                    TEXT    NOT NULL PRIMARY KEY,
+  title                 TEXT    NOT NULL CHECK (length(trim(title)) > 0),
+  description           TEXT    CHECK (length(trim(description)) > 0),
+  -- The SHA-256 of the photo's file, which is named after it
+  photo_id              TEXT    CHECK (length(photo_id) = 64 AND photo_id NOT GLOB '*[^0-9a-f]*'),
+  base_servings         INTEGER NOT NULL DEFAULT 4 CHECK (base_servings >= 1),
+  prep_minutes          INTEGER CHECK (prep_minutes >= 0),
+  cook_minutes          INTEGER CHECK (cook_minutes >= 0),
+  -- For the whole recipe
+  cost_cents            INTEGER CHECK (cost_cents >= 0),
+  source                TEXT    CHECK (length(trim(source)) > 0),
+  notes                 TEXT    CHECK (length(trim(notes)) > 0),
+  favorite              INTEGER NOT NULL DEFAULT 0 CHECK (favorite IN (0,1)),
+  cook_count            INTEGER NOT NULL DEFAULT 0 CHECK (cook_count >= 0),
+  -- A local date, YYYY-MM-DD: date() gives it back unchanged only if valid
+  last_cooked           TEXT    CHECK (date(last_cooked) IS last_cooked),
+  last_planned_servings INTEGER CHECK (last_planned_servings >= 1),
+  created_at            INTEGER NOT NULL,
+  modified_at           INTEGER NOT NULL,
+  deleted               INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0,1))
+) STRICT;
+
+-- A recipe's ingredients, and their substitutes. Rules: docs/schema.md
+CREATE TABLE recipe_ingredient (
+  id            TEXT    NOT NULL PRIMARY KEY,
+  recipe_id     TEXT    NOT NULL REFERENCES recipe(id),
+  -- On a substitute: the main ingredient it can replace
+  parent_id     TEXT    REFERENCES recipe_ingredient(id),
+  -- Among siblings: main ingredients among themselves, a main ingredient's
+  -- substitutes among themselves
+  position      INTEGER NOT NULL CHECK (position >= 0),
+  -- NULL: to taste
+  quantity      REAL    CHECK (quantity > 0),
+  unit          TEXT    CHECK (unit IN ('pcs', 'g', 'kg', 'ml', 'cl', 'l', 'pack', 'bunch',
+                                        'oz', 'lb', 'fl_oz', 'tsp', 'tbsp', 'cup',
+                                        'clove', 'pinch', 'can')),
+  -- A free-text unit, as typed: "handfuls"
+  unit_text     TEXT    CHECK (length(trim(unit_text)) > 0),
+  name          TEXT    NOT NULL CHECK (length(trim(name)) > 0),
+  -- The dictionary ingredient with the same canonical name
+  ingredient_id TEXT    NOT NULL REFERENCES ingredient(id),
+  note          TEXT    CHECK (length(trim(note)) > 0),
+  optional      INTEGER NOT NULL DEFAULT 0 CHECK (optional IN (0,1)),
+  modified_at   INTEGER NOT NULL,
+  deleted       INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0,1)),
+  -- One unit at most
+  CHECK (unit IS NULL OR unit_text IS NULL),
+  -- A quantity has a unit; without one, only free text can stay ("a handful")
+  CHECK (CASE WHEN quantity IS NULL THEN unit IS NULL
+              ELSE unit IS NOT NULL OR unit_text IS NOT NULL END)
+) STRICT;
+
+-- A recipe's steps. Rules: docs/schema.md
+CREATE TABLE step (
+  id          TEXT    NOT NULL PRIMARY KEY,
+  recipe_id   TEXT    NOT NULL REFERENCES recipe(id),
+  position    INTEGER NOT NULL CHECK (position >= 0),
+  text        TEXT    NOT NULL CHECK (length(trim(text)) > 0),
+  modified_at INTEGER NOT NULL,
+  deleted     INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0,1))
+) STRICT;
+
+-- Words of a step's text that name one of the recipe's main ingredients.
+-- Rules: docs/schema.md
+CREATE TABLE step_mention (
+  id                   TEXT    NOT NULL PRIMARY KEY,
+  step_id              TEXT    NOT NULL REFERENCES step(id),
+  recipe_ingredient_id TEXT    NOT NULL REFERENCES recipe_ingredient(id),
+  -- In Unicode code points
+  start                INTEGER NOT NULL CHECK (start >= 0),
+  length               INTEGER NOT NULL CHECK (length > 0),
+  -- What the step uses, in the ingredient's unit. NULL: all of it.
+  quantity             REAL    CHECK (quantity > 0),
+  modified_at          INTEGER NOT NULL,
+  deleted              INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0,1))
+) STRICT;
+
+-- The tags a recipe carries. Rules: docs/schema.md
+CREATE TABLE recipe_tag (
+  id          TEXT    NOT NULL PRIMARY KEY,
+  recipe_id   TEXT    NOT NULL REFERENCES recipe(id),
+  tag_id      TEXT    NOT NULL REFERENCES tag(id),
+  modified_at INTEGER NOT NULL,
+  deleted     INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0,1))
+) STRICT;
+
+CREATE UNIQUE INDEX recipe_tag_live ON recipe_tag(recipe_id, tag_id) WHERE deleted = 0;
 
 -- The app's settings, by key, e.g. theme = 'dark'. Values are language-neutral
 -- codes, never translated text. Unlike the other tables, no id and no deleted

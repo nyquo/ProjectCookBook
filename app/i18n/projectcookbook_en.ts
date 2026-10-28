@@ -13,29 +13,73 @@
     </message>
 </context>
 <context>
-    <name>AmountFormat</name>
+    <name>RecipeModel</name>
     <message numerus="yes">
-        <location filename="../AmountFormat.cpp" line="33"/>
-        <source>%Ln piece(s)</source>
+        <location filename="../RecipeModel.cpp" line="57"/>
+        <source>%Ln min</source>
         <translation>
-            <numerusform>%Ln piece</numerusform>
-            <numerusform>%Ln pieces</numerusform>
+            <numerusform>%Ln min</numerusform>
+            <numerusform>%Ln min</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../AmountFormat.cpp" line="38"/>
-        <source>%Ln pack(s)</source>
+        <location filename="../RecipeModel.cpp" line="61"/>
+        <source>%Ln h</source>
         <translation>
-            <numerusform>%Ln pack</numerusform>
-            <numerusform>%Ln packs</numerusform>
+            <numerusform>%Ln h</numerusform>
+            <numerusform>%Ln h</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../AmountFormat.cpp" line="43"/>
-        <source>%Ln bunch(es)</source>
+        <location filename="../RecipeModel.cpp" line="219"/>
+        <source>%Ln×</source>
+        <comment>times cooked</comment>
         <translation>
-            <numerusform>%Ln bunch</numerusform>
-            <numerusform>%Ln bunches</numerusform>
+            <numerusform>%Ln×</numerusform>
+            <numerusform>%Ln×</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../RecipeModel.cpp" line="235"/>
+        <source>%Ln d ago</source>
+        <translation>
+            <numerusform>%Ln d ago</numerusform>
+            <numerusform>%Ln d ago</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../RecipeModel.cpp" line="237"/>
+        <source>%Ln wk ago</source>
+        <translation>
+            <numerusform>%Ln wk ago</numerusform>
+            <numerusform>%Ln wk ago</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../RecipeModel.cpp" line="239"/>
+        <source>%Ln mo ago</source>
+        <translation>
+            <numerusform>%Ln mo ago</numerusform>
+            <numerusform>%Ln mo ago</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../RecipeModel.cpp" line="241"/>
+        <source>%Ln yr ago</source>
+        <translation>
+            <numerusform>%Ln yr ago</numerusform>
+            <numerusform>%Ln yr ago</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>RecipeScreen</name>
+    <message numerus="yes">
+        <location filename="../RecipeScreen.qml" line="105"/>
+        <source>serving(s)</source>
+        <translation>
+            <numerusform>serving</numerusform>
+            <numerusform>servings</numerusform>
         </translation>
     </message>
 </context>

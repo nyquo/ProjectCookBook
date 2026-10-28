@@ -1,13 +1,16 @@
 #include "AppearanceSettings.hpp"
+#include "PhotoStore.hpp"
 #include "appBackend.hpp"
 #include "core/Backend.hpp"
 #include "core/Database.hpp"
 #include "core/appearance.hpp"
+#include "sampleRecipes.hpp"
 
 #include <QDir>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
+#include <QSet>
 #include <QStandardPaths>
 #include <QTranslator>
 #include <QtQml/QQmlExtensionPlugin>
@@ -18,12 +21,25 @@
 Q_IMPORT_QML_PLUGIN(PlatingPlugin)
 Q_IMPORT_QML_PLUGIN(CookbookUiPlugin)
 
-static std::filesystem::path databasePath()
+// The app's private data folder
+static QDir dataFolder()
 {
-  const QString dir =
+  const QString path =
     QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-  QDir().mkpath(dir);
-  return QDir(dir).filesystemAbsolutePath() / "data.db";
+  QDir().mkpath(path);
+  return QDir(path);
+}
+
+// The photos of live recipes; the others' files can go
+static QSet<QString> livePhotoIds(const core::RecipeStore& recipes)
+{
+  QSet<QString> ids;
+  for (const core::Recipe& recipe : recipes.recipes()) {
+    if (recipe.photoId) {
+      ids.insert(QString::fromStdString(*recipe.photoId));
+    }
+  }
+  return ids;
 }
 
 int main(int argc, char* argv[])
@@ -41,17 +57,26 @@ int main(int argc, char* argv[])
     qWarning("Can't load the English plural forms");
   }
 
-  // Declared before the engine, so it outlives every model QML creates
+  // Declared before the engine, so they outlive every model QML creates
   std::optional<core::Backend> backend;
+  std::optional<PhotoStore> photos;
   QString startupError;
   try {
-    backend.emplace(databasePath());
+    const QDir folder = dataFolder();
+    backend.emplace(folder.filesystemAbsolutePath() / "data.db");
     app::setBackend(*backend);
+    photos.emplace(folder.absoluteFilePath(QStringLiteral("photos")));
+    app::setPhotoStore(*photos);
+#ifndef NDEBUG
+    app::addSampleRecipes(*backend, *photos);
+#endif
+    photos->removeAllBut(livePhotoIds(backend->recipes()));
     // Before the first frame, so the app never shows the wrong theme
     AppearanceSettings::applyColorScheme(core::themeMode(backend->settings()));
   } catch (const core::DatabaseError& error) {
     qCritical("Can't open the database: %s", error.what());
     startupError = QString::fromUtf8(error.what());
+    backend.reset();
   }
 
   // Before any QML loads, so a stray `import QtQuick.Controls` gets Plating

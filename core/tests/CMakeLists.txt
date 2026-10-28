@@ -9,7 +9,10 @@ add_executable(coreTests
     ingredientStoreTests.cpp
     listEditsTests.cpp
     migrationsTests.cpp
+    recipeStoreTests.cpp
+    recipeViewTests.cpp
     settingStoreTests.cpp
+    shownAmountTests.cpp
     tagColorStoreTests.cpp
     tagStoreTests.cpp
     tagViewTests.cpp

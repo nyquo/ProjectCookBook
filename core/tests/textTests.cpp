@@ -47,3 +47,19 @@ TEST_CASE("canonicalName keeps what it doesn't fold")
   CHECK(core::canonicalName("\xc0\xaf") == "\xc0\xaf");
   CHECK(core::canonicalName("") == "");
 }
+
+TEST_CASE("codePointCount and byteOffset count Unicode code points")
+{
+  // "Émincez l’ail": É and ’ take 2 and 3 bytes
+  const std::string_view text = "\xc3\x89mincez l\xe2\x80\x99"
+                                "ail";
+  CHECK(core::codePointCount(text) == 13);
+  CHECK(core::byteOffset(text, 0) == 0);
+  CHECK(core::byteOffset(text, 1) == 2);
+  CHECK(core::byteOffset(text, 10) == 13);
+  CHECK(core::byteOffset(text, 13) == text.size());
+  CHECK(core::byteOffset(text, 20) == text.size());
+  // A 4-byte code point, then an invalid byte that counts as one
+  CHECK(core::codePointCount("\xf0\x9f\xa5\x95\xff") == 2);
+  CHECK(core::codePointCount("") == 0);
+}

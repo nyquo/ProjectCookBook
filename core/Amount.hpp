@@ -17,11 +17,18 @@ enum class Unit
   Bunches,
   Ounces,
   Pounds,
-  FluidOunces
+  FluidOunces,
+  Teaspoons,
+  Tablespoons,
+  Cups,
+  Cloves,
+  Pinches,
+  Cans
 };
 
 // The language-neutral code tables store: "pcs", "g", "kg", "ml", "cl", "l",
-// "pack", "bunch", "oz", "lb", "fl_oz"
+// "pack", "bunch", "oz", "lb", "fl_oz", "tsp", "tbsp", "cup", "clove",
+// "pinch", "can"
 std::string_view unitCode(Unit unit);
 std::optional<Unit> unitFromCode(std::string_view code);
 

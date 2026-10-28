@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/RecipeStore.hpp"
 #include "core/TagStore.hpp"
 
 #include <QAbstractListModel>
@@ -9,10 +10,12 @@
 #include <vector>
 
 // Created by QML, one per screen: the live tags, sorted by name in the user's
-// locale. Follows the app's TagStore; a rename moves its row.
+// locale. Follows the app's TagStore, and its RecipeStore for the recipe
+// counts; a rename moves its row.
 class TagListModel
   : public QAbstractListModel
   , private core::TagObserver
+  , private core::RecipeObserver
 {
   Q_OBJECT
   QML_ELEMENT
@@ -26,7 +29,7 @@ public:
     NameRole,
     // A tag family's key: "mint", "butter", "sky" or "peach"
     ColorKeyRole,
-    // The recipes that carry the tag
+    // The live recipes that carry the tag
     RecipeCountRole
   };
 
@@ -42,7 +45,9 @@ public:
   Q_ENUM(Error)
 
   explicit TagListModel(QObject* parent = nullptr);
-  explicit TagListModel(core::TagStore& store, QObject* parent = nullptr);
+  TagListModel(core::TagStore& store,
+               core::RecipeStore& recipes,
+               QObject* parent = nullptr);
   ~TagListModel() override;
 
   int rowCount(const QModelIndex& parent = {}) const override;
@@ -72,6 +77,8 @@ private:
 
   void tagAboutToChange(const core::TagChange& change) noexcept override;
   void tagChanged(const core::TagChange& change) noexcept override;
+  void recipeAboutToChange(const core::RecipeChange& change) noexcept override;
+  void recipeChanged(const core::RecipeChange& change) noexcept override;
 
   std::vector<Row> computeRows() const;
   // Brings the rows up to date with single-row inserts, removals, moves and
@@ -79,6 +86,7 @@ private:
   void refresh();
 
   core::TagStore& m_store;
+  core::RecipeStore& m_recipes;
   QCollator m_collator;
   std::vector<Row> m_rows;
 };

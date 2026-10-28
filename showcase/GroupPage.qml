@@ -18,7 +18,7 @@ Page {
     // Scrolls so `item` is in view, e.g. a menu's anchor before it opens
     function reveal(item: Item) {
         const y = item.mapToItem(canvas, 0, 0).y
-        flick.contentY = Math.max(0, Math.min(y - flick.height / 3, flick.contentHeight - flick.height))
+        flick.scrollTo(y - flick.height / 3)
     }
 
     // The four color families, for sample data
@@ -27,12 +27,11 @@ Page {
     readonly property colorFamily sky: ({ fill: page.theme.tagSky, ink: page.theme.tagSkyInk })
     readonly property colorFamily peach: ({ fill: page.theme.tagPeach, ink: page.theme.tagPeachInk })
 
-    Flickable {
+    ScrollArea {
         id: flick
 
         anchors.fill: parent
         contentHeight: canvas.height
-        boundsBehavior: Flickable.StopAtBounds
 
         Rectangle {
             id: canvas

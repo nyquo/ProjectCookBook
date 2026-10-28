@@ -3,12 +3,14 @@ import QtQuick.Layouts
 import Plating
 import CookbookUi
 
-// A tab's root screen: its title and the settings button, then its content.
-// For now the content is empty.
+// A tab's root screen: its title and the settings button, then its content,
+// which fills the rest
 Item {
     id: page
 
     property string title
+
+    default property alias content: body.data
 
     signal settingsClicked
 
@@ -28,6 +30,8 @@ Item {
         }
 
         Item {
+            id: body
+
             Layout.fillWidth: true
             Layout.fillHeight: true
         }

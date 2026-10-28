@@ -355,12 +355,11 @@ GroupPage {
     Specimen {
         title: qsTr("ChoiceChip: one of a row, several with dots, small")
 
-        Flickable {
+        ScrollArea {
             width: parent.width
             height: mealRow.implicitHeight
+            orientation: Qt.Horizontal
             contentWidth: mealRow.implicitWidth
-            flickableDirection: Flickable.HorizontalFlick
-            boundsBehavior: Flickable.StopAtBounds
             clip: true
 
             Row {

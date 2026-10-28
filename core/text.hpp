@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <functional>
 #include <string>
 #include <string_view>
@@ -16,6 +17,12 @@ std::string_view trimmed(std::string_view text);
 // whitespace and typographic apostrophes as "'". Other characters stay as they
 // are: Greek or Cyrillic capitals don't fold. Invalid UTF-8 bytes are kept.
 std::string canonicalName(std::string_view name);
+
+// The Unicode code points in UTF-8 text; an invalid byte counts as one, as in
+// canonicalName()
+std::size_t codePointCount(std::string_view text);
+// Where code point `index` starts, in bytes; text.size() past the end
+std::size_t byteOffset(std::string_view text, std::size_t index);
 
 // Orders display names, e.g. by the user's locale
 using NameLess = std::function<bool(std::string_view, std::string_view)>;

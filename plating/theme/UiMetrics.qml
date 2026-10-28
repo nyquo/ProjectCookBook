@@ -94,6 +94,15 @@ QtObject {
     readonly property real opacityMuted: 0.8
     // An IconBadge's icon, as a share of the badge's size
     readonly property real badgeIconRatio: 0.55
+    // ScrollArea's position indicator, while shown
+    readonly property real opacityScrollIndicator: 0.5
+
+    // ScrollArea: one wheel notch; the position indicator's thickness, its
+    // distance to the edges, its shortest length
+    readonly property real scrollWheelStep: UiScaler.scale(48)
+    readonly property real scrollIndicatorThickness: root.space1
+    readonly property real scrollIndicatorMargin: UiScaler.scale(3)
+    readonly property real scrollIndicatorMinLength: root.space8
 
     // Button, per size: height, side padding, padding on the icon side, icon
     // size, icon-to-label gap

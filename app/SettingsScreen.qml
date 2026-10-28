@@ -165,13 +165,10 @@ AppScreen {
             onBackClicked: screen.StackView.view.pop()
         }
 
-        Flickable {
-            id: flick
-
+        ScrollArea {
             Layout.fillWidth: true
             Layout.fillHeight: true
             contentHeight: body.implicitHeight + body.anchors.topMargin + body.anchors.bottomMargin
-            boundsBehavior: Flickable.StopAtBounds
             clip: true
 
             ColumnLayout {

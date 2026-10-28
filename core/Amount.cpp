@@ -6,8 +6,9 @@
 namespace core {
 
 // In Unit order
-static constexpr std::array<std::string_view, 11> unitCodes{
-  "pcs", "g", "kg", "ml", "cl", "l", "pack", "bunch", "oz", "lb", "fl_oz"
+static constexpr std::array<std::string_view, 17> unitCodes{
+  "pcs", "g",     "kg",  "ml",   "cl",  "l",     "pack",  "bunch", "oz",
+  "lb",  "fl_oz", "tsp", "tbsp", "cup", "clove", "pinch", "can"
 };
 
 std::string_view unitCode(Unit unit)

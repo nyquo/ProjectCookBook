@@ -181,15 +181,6 @@ TagFamily TagStore::nextColor() const
   return static_cast<TagFamily>(std::ranges::min_element(uses) - uses.begin());
 }
 
-int TagStore::recipeCount(std::string_view id) const
-{
-  // Throws for an unknown id already, as it will once it counts
-  indexOf(id);
-  // TODO(recipes): count the live recipes linked to the tag, once the recipe
-  // table and its recipe-tag links exist
-  return 0;
-}
-
 void TagStore::addObserver(TagObserver& observer)
 {
   m_observers.add(observer);

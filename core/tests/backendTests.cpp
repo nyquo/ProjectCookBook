@@ -14,6 +14,7 @@ TEST_CASE("A database file keeps its data when reopened")
   std::vector<core::Aisle> savedAisles;
   std::vector<core::Ingredient> savedIngredients;
   std::vector<core::Tag> savedTags;
+  std::vector<core::Recipe> savedRecipes;
   {
     core::Backend backend(file.path(), clock.function());
     CHECK(backend.tagColors().tagColors().size() == 8);
@@ -21,6 +22,7 @@ TEST_CASE("A database file keeps its data when reopened")
     CHECK(test::names(aisles) == test::seedNames);
     CHECK(backend.ingredients().ingredients().size() == 34);
     CHECK(backend.tags().tags().empty());
+    CHECK(backend.recipes().recipes().empty());
 
     REQUIRE(aisles.create("Bakery", test::someColors));
     REQUIRE(aisles.create("Frozen", test::otherColors));
@@ -35,10 +37,20 @@ TEST_CASE("A database file keeps its data when reopened")
     REQUIRE(brunch);
     REQUIRE(backend.tags().create("Weeknight"));
     backend.tags().setColor(*brunch, core::TagFamily::Peach);
+    core::RecipeDraft toast;
+    toast.title = "Toast";
+    toast.ingredients = {
+      { .name = "Baguette", .quantity = 1, .unit = core::Unit::Pieces }
+    };
+    toast.tagIds = { *brunch };
+    const auto recipe = backend.recipes().create(toast);
+    REQUIRE(recipe);
+    backend.recipes().setFavorite(*recipe, true);
     core::setThemeMode(backend.settings(), core::ThemeMode::Dark);
     savedAisles = aisles.aisles();
     savedIngredients = backend.ingredients().ingredients();
     savedTags = backend.tags().tags();
+    savedRecipes = backend.recipes().recipes();
   }
 
   // Re-running the first migration would throw: the table already exists
@@ -46,6 +58,7 @@ TEST_CASE("A database file keeps its data when reopened")
   CHECK(reopened.aisles().aisles() == savedAisles);
   CHECK(reopened.ingredients().ingredients() == savedIngredients);
   CHECK(reopened.tags().tags() == savedTags);
+  CHECK(reopened.recipes().recipes() == savedRecipes);
   CHECK(core::themeMode(reopened.settings()) == core::ThemeMode::Dark);
 
   core::Database db(file.path());

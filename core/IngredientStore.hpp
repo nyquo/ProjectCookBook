@@ -107,6 +107,12 @@ public:
   [[nodiscard]] std::expected<void, IngredientError> restoreToCatalog(
     std::string_view id);
 
+  // The id of the live ingredient with the name's canonical name, catalog item
+  // or not. Without one, adds the name outside the catalog, for recipes. Fails
+  // with EmptyName only.
+  [[nodiscard]] std::expected<std::string, IngredientError> dictionaryId(
+    std::string_view name);
+
   // What addToCatalog(), or updateCatalogItem() for catalog item `id`, would
   // say of the name
   [[nodiscard]] std::expected<void, IngredientError> checkCatalogName(

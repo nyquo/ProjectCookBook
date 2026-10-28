@@ -33,17 +33,35 @@ QtObject {
     readonly property real noteCardPadding: UiScaler.scale(18)
     readonly property real noteCardGap: UiMetrics.space2
 
-    // RecipeHeader: photo, how far the sheet overlaps it; buttons from the top
-    // and the sides; the sheet's padding and gaps
+    // RecipeHeader: photo, how far the sheet overlaps it; buttons
+    // (RecipeActions) from the top and the sides; the sheet's padding, gap
+    // between its sections, and within the first one
     readonly property real recipeHeaderPhotoHeight: UiScaler.scale(310)
     readonly property real recipeHeaderOverlap: UiScaler.scale(36)
     readonly property real recipeHeaderButtonTop: UiMetrics.space5
     readonly property real recipeHeaderButtonSide: UiMetrics.space4
     readonly property real recipeHeaderButtonGap: UiMetrics.space2
     readonly property real recipeHeaderPaddingV: UiScaler.scale(26)
-    readonly property real recipeHeaderPaddingH: UiMetrics.space5
+    readonly property real recipeHeaderPaddingH: UiMetrics.space4
+    readonly property real recipeSectionGap: UiMetrics.space5
     readonly property real recipeHeaderGap: UiMetrics.space3
     readonly property real recipeHeaderTagGap: UiScaler.scale(6)
+
+    // A screen pulled down at its top to close it (AppScreen), as shown, which
+    // is UiMotion.scrollEdgeResistance of the finger's travel: the pull that
+    // closes it on release, and how much it must grow in
+    // CookbookMotion.screenPullFlickTime for a flick
+    readonly property real screenPullDistance: UiScaler.scale(80)
+    readonly property real screenPullFlickDistance: UiScaler.scale(40)
+
+    // Recipe screen: a section's title to its content; between step cards;
+    // the floating actions' distance to the sides and above the bottom inset,
+    // their gap, and the room the content keeps above them
+    readonly property real recipeTitleGap: UiMetrics.space3
+    readonly property real recipeStepGap: UiScaler.scale(10)
+    readonly property real recipeActionsMargin: UiMetrics.space4
+    readonly property real recipeActionsGap: UiMetrics.space3
+    readonly property real recipeActionsClearance: UiMetrics.space8
 
     // RecipeRow
     readonly property real recipeRowPaddingV: UiScaler.scale(10)
@@ -56,10 +74,11 @@ QtObject {
     readonly property real plannedCardPadding: UiMetrics.space3
     readonly property real plannedCardGap: UiMetrics.space3
 
-    // The card IngredientRows sit in
+    // IngredientsCard: padding; its title row to the rows
     readonly property real ingredientsCardPaddingTop: UiScaler.scale(18)
     readonly property real ingredientsCardPaddingH: UiMetrics.space4
     readonly property real ingredientsCardPaddingBottom: UiMetrics.space2
+    readonly property real ingredientsCardTitleGap: UiMetrics.space3
 
     // IngredientRow, and its edit variant; the Substitute link
     readonly property real ingredientRowPaddingV: UiScaler.scale(10)

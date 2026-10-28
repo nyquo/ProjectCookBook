@@ -37,6 +37,24 @@ QtObject {
         }
     }
 
+    function recipe(error: int): string {
+        switch (error) {
+        case RecipeModel.Error.StorageFailed:
+            return qsTr("Couldn't save the change.")
+        default:
+            return ""
+        }
+    }
+
+    function recipeList(error: int): string {
+        switch (error) {
+        case RecipeListModel.Error.StorageFailed:
+            return qsTr("Couldn't save the change.")
+        default:
+            return ""
+        }
+    }
+
     function tag(error: int): string {
         switch (error) {
         case TagListModel.Error.EmptyName:

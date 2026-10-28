@@ -32,11 +32,13 @@ qt_add_qml_module(cookbookui
         IngredientIconGrid.qml
         IngredientIcons.qml
         IngredientRow.qml
+        IngredientsCard.qml
         IngredientTile.qml
         NoteCard.qml
         PlannedRecipeCard.qml
         QuantityField.qml
         QuantityPill.qml
+        RecipeActions.qml
         RecipeHeader.qml
         RecipeRow.qml
         ShoppingItem.qml
