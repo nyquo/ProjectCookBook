@@ -3,6 +3,7 @@
 #include "core/AisleStore.hpp"
 #include "core/Database.hpp"
 #include "core/IngredientStore.hpp"
+#include "core/RecipeStore.hpp"
 #include "core/SettingStore.hpp"
 #include "core/TagColorStore.hpp"
 #include "core/TagStore.hpp"
@@ -30,6 +31,7 @@ public:
   AisleStore& aisles() { return m_aisles; }
   IngredientStore& ingredients() { return m_ingredients; }
   TagStore& tags() { return m_tags; }
+  RecipeStore& recipes() { return m_recipes; }
 
 private:
   Database m_db;
@@ -40,6 +42,8 @@ private:
   // Checks aisles against m_aisles
   IngredientStore m_ingredients;
   TagStore m_tags;
+  // Links ingredients through m_ingredients, checks tags against m_tags
+  RecipeStore m_recipes;
 };
 
 }

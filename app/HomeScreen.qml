@@ -11,6 +11,14 @@ AppScreen {
     id: screen
 
     signal settingsClicked
+    signal recipeClicked(string recipeId)
+
+    // Undoes a recipe's deletion, e.g. from the snackbar that reported it
+    function restoreRecipe(recipeId: string) {
+        const text = ErrorTexts.recipeList(recipes.restore(recipeId))
+        if (text !== "")
+            screen.notify(text, "", null)
+    }
 
     // A tab of the StackLayout
     component Tab: TabPage {
@@ -52,6 +60,10 @@ AppScreen {
 
     snackbarOffset: nav.height
 
+    RecipeListModel {
+        id: recipes
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -67,6 +79,30 @@ AppScreen {
 
             Tab {
                 title: qsTr("Recipes")
+
+                // TODO(recipes list): a plain list of titles until the real
+                // recipes list
+                ScrollArea {
+                    anchors.fill: parent
+
+                    view: ListView {
+                        clip: true
+                        model: recipes
+                        leftMargin: UiMetrics.space4 + screen.SafeArea.margins.left
+                        rightMargin: UiMetrics.space4 + screen.SafeArea.margins.right
+
+                        delegate: ListRow {
+                            id: row
+
+                            required property string recipeId
+                            required property string title
+
+                            width: ListView.view.width - ListView.view.leftMargin - ListView.view.rightMargin
+                            text: row.title
+                            onClicked: screen.recipeClicked(row.recipeId)
+                        }
+                    }
+                }
             }
             Tab {
                 title: qsTr("Planning")

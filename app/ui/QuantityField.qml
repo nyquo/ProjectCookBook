@@ -207,7 +207,7 @@ T.Control {
                 color: control.theme.bg
                 clip: true
 
-                Flickable {
+                ScrollArea {
                     id: unitScroller
 
                     x: CookbookMetrics.quantityCompactPadding
@@ -215,8 +215,7 @@ T.Control {
                     width: parent.width - 2 * CookbookMetrics.quantityCompactPadding
                     height: unitRow.implicitHeight
                     contentWidth: unitRow.implicitWidth
-                    flickableDirection: Flickable.HorizontalFlick
-                    boundsBehavior: Flickable.StopAtBounds
+                    orientation: Qt.Horizontal
 
                     Row {
                         id: unitRow

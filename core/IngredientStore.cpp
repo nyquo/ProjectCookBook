@@ -207,6 +207,44 @@ std::expected<void, IngredientError> IngredientStore::restoreToCatalog(
   return {};
 }
 
+std::expected<std::string, IngredientError> IngredientStore::dictionaryId(
+  std::string_view name)
+{
+  checkNotNotifying();
+  std::string clean(trimmed(name));
+  std::string canonical = canonicalName(clean);
+  if (canonical.empty()) {
+    return std::unexpected(IngredientError::EmptyName);
+  }
+  const auto it =
+    std::ranges::find(m_ingredients, canonical, &Ingredient::canonicalName);
+  if (it != m_ingredients.end()) {
+    return it->id;
+  }
+
+  const Timestamp now = m_clock();
+  Ingredient ingredient{ m_ids.next(now),
+                         std::move(clean),
+                         std::move(canonical),
+                         std::nullopt,
+                         std::nullopt,
+                         std::nullopt,
+                         false,
+                         now };
+  Statement insert = m_db.prepare(
+    "INSERT INTO ingredient (id, display_name, canonical_name, aisle_id, icon, "
+    "one_tap_quantity, one_tap_unit, in_catalog, modified_at) "
+    "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)");
+  insert.bind(1, ingredient.id);
+  bindColumns(insert, 2, ingredient);
+  insert.run();
+
+  std::string id = ingredient.id;
+  apply(IngredientInserted{ count() },
+        [&] { m_ingredients.push_back(std::move(ingredient)); });
+  return id;
+}
+
 std::expected<void, IngredientError> IngredientStore::checkCatalogName(
   std::string_view name,
   std::optional<std::string_view> id) const

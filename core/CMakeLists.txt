@@ -14,8 +14,12 @@ add_library(core STATIC
     listEdits.hpp listEdits.cpp
     migrations.hpp migrations.cpp
     Observers.hpp
+    Recipe.hpp
+    RecipeStore.hpp RecipeStore.cpp
     recipeFields.hpp recipeFields.cpp
+    recipeView.hpp recipeView.cpp
     SettingStore.hpp SettingStore.cpp
+    ShownAmount.hpp ShownAmount.cpp
     Tag.hpp Tag.cpp
     TagColor.hpp
     TagColorStore.hpp TagColorStore.cpp

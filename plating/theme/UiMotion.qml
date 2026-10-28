@@ -51,6 +51,19 @@ QtObject {
     readonly property int listLeave: 340
     readonly property int listLand: 300
 
+    // ScrollArea. A glide keeps scrollFriction of its speed every 1/60 s and
+    // stops below scrollStopSpeed, in px per ms; the speed it starts at is the
+    // drag's over its last scrollSampleTime ms. Past an edge, the content
+    // moves by scrollEdgeResistance of the finger's travel, then springs back.
+    // The indicator stays scrollIndicatorStay after the last move.
+    readonly property real scrollFriction: 0.95
+    readonly property real scrollStopSpeed: 0.03
+    readonly property int scrollSampleTime: 100
+    readonly property real scrollEdgeResistance: 0.5
+    readonly property int scrollSettle: 220
+    readonly property int scrollIndicatorStay: 800
+    readonly property int scrollIndicatorFade: 200
+
     // The duration of an animation that moves, scales or resizes
     function move(duration: int): int {
         return root.reduced ? 0 : duration

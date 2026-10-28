@@ -20,7 +20,8 @@ T.Control {
     property string name
     property bool optional: false
     property string note
-    // As given ("or 200 g crème fraîche"); a Substitute link shows them
+    // As given ("or 200 g crème fraîche"); a Substitute link shows them,
+    // "Substitutes" when there are several
     property var alternatives: []
     property bool expanded: false
     // Editing: "On the list as Garlic"
@@ -164,7 +165,7 @@ T.Control {
                 visible: !control.editing && control.alternatives.length > 0
                 implicitWidth: implicitContentWidth
                 implicitHeight: CookbookMetrics.substituteHeight
-                text: qsTr("Substitute")
+                text: control.alternatives.length > 1 ? qsTr("Substitutes") : qsTr("Substitute")
                 Accessible.role: Accessible.Button
                 Accessible.name: substitute.text
                 onClicked: control.expanded = !control.expanded
@@ -212,7 +213,7 @@ T.Control {
                     Layout.fillWidth: true
                     text: modelData
                     font: UiTypography.bodyS
-                    color: control.theme.ink
+                    color: control.theme.inkMuted
                     wrapMode: Text.Wrap
                 }
             }

@@ -8,7 +8,8 @@ import Plating
 // A sheet rising from the bottom over a scrim: a grip, a header (title,
 // subtitle, an optional action on the right), the content, an optional footer.
 // It fits its content, or is tall: its top stays sheetTopGap from the top of the
-// window and the content (e.g. a Flickable with Layout.fillHeight) scrolls.
+// window and the content (e.g. a ScrollArea with Layout.fillHeight and
+// yieldsAtStart) scrolls.
 // Tapping the scrim or swiping it down dismisses it, unless it isn't
 // dismissible.
 T.Drawer {

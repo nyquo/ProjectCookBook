@@ -337,11 +337,11 @@ GroupPage {
             }
         }
 
-        Flickable {
+        ScrollArea {
             Layout.fillWidth: true
             Layout.fillHeight: true
             contentHeight: sheetRows.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
+            yieldsAtStart: true
             clip: true
 
             ListGroup {

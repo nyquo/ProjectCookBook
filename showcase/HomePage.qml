@@ -45,12 +45,11 @@ Page {
         }
     }
 
-    Flickable {
+    ScrollArea {
         id: flick
 
         anchors.fill: parent
         contentHeight: canvas.height
-        boundsBehavior: Flickable.StopAtBounds
 
         Rectangle {
             id: canvas

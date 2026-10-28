@@ -28,7 +28,7 @@ GroupPage {
     property string note: qsTr("Slice the potatoes thin, no need to rinse them: their starch thickens the cream.")
 
     title: qsTr("Recipes")
-    subtitle: qsTr("RecipeHeader, RecipeRow, PlannedRecipeCard, SortMenu, NoteCard")
+    subtitle: qsTr("RecipeHeader, RecipeActions, RecipeRow, PlannedRecipeCard, SortMenu, NoteCard")
 
     Specimen {
         title: qsTr("RecipeHeader: with a photo")
@@ -68,6 +68,29 @@ GroupPage {
                 { name: qsTr("Vegetarian"), family: page.mint }
             ]
             title: qsTr("Dahl de lentilles corail")
+        }
+    }
+
+    Specimen {
+        title: qsTr("RecipeActions")
+        note: qsTr("RecipeHeader's buttons, which the recipe screen floats over its content.")
+        fullBleed: true
+
+        Rectangle {
+            width: parent.width
+            implicitHeight: actions.implicitHeight + UiMetrics.space5
+            color: page.butter.fill
+
+            RecipeActions {
+                id: actions
+
+                width: parent.width
+                favorite: page.favorite
+                onFavoriteClicked: page.favorite = !page.favorite
+                onBackClicked: ShowcaseState.notify(qsTr("Back"), null)
+                onEditClicked: ShowcaseState.notify(qsTr("Edit"), null)
+                onMoreClicked: ShowcaseState.notify(qsTr("More actions"), null)
+            }
         }
     }
 

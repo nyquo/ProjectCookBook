@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Plating
 
@@ -28,6 +30,14 @@ ApplicationWindow {
     function notify(message: string, actionText: string, action: var) {
         window.snackbarAction = action ?? null
         snackbar.show(message, actionText)
+    }
+
+    // A recipe screen deleted its recipe: it closes, and the recipes list
+    // offers Undo. Here rather than in the screen, whose context the Undo
+    // action would outlive.
+    function recipeRemoved(recipeId: string, title: string) {
+        stack.pop()
+        window.notify(qsTr("%1 deleted").arg(title), qsTr("Undo"), () => home.restoreRecipe(recipeId))
     }
 
     // Phone-like size for desktop previews; ignored on Android (always fullscreen)
@@ -63,6 +73,12 @@ ApplicationWindow {
         property: "actualSize"
         value: Qt.size(window.width, window.height)
     }
+    // The system's reduced motion preference
+    Binding {
+        target: UiMotion
+        property: "reduced"
+        value: Application.styleHints.accessibility.motionPreference === Qt.MotionPreference.ReducedMotion
+    }
     Binding {
         target: DefaultLightTheme
         property: "accentChoice"
@@ -80,7 +96,10 @@ ApplicationWindow {
         anchors.fill: parent
         focus: true
         initialItem: HomeScreen {
+            id: home
+
             onSettingsClicked: stack.push(settingsScreen)
+            onRecipeClicked: recipeId => stack.push(recipeScreen, { recipeId: recipeId })
         }
 
         // A message's action acts on the screen that showed it, which a pop
@@ -95,6 +114,14 @@ ApplicationWindow {
         id: settingsScreen
 
         SettingsScreen {}
+    }
+
+    Component {
+        id: recipeScreen
+
+        RecipeScreen {
+            onRemoved: (recipeId, title) => window.recipeRemoved(recipeId, title)
+        }
     }
 
     // Over the sheets, which open later

@@ -362,12 +362,6 @@ TEST_CASE_FIXTURE(Fixture,
   CHECK(reloadMatches());
 }
 
-TEST_CASE_FIXTURE(Fixture, "No tag is on a recipe yet")
-{
-  const std::string id = create("Brunch");
-  CHECK(store.recipeCount(id) == 0);
-}
-
 TEST_CASE_FIXTURE(Fixture, "Unknown ids are programming errors")
 {
   const std::string id = create("Brunch");
@@ -380,7 +374,6 @@ TEST_CASE_FIXTURE(Fixture, "Unknown ids are programming errors")
   CHECK_THROWS_AS((void)store.restore("unknown"), std::invalid_argument);
   CHECK_THROWS_AS((void)store.restore(id),
                   std::invalid_argument); // live, not deleted
-  CHECK_THROWS_AS((void)store.recipeCount("unknown"), std::invalid_argument);
 }
 
 TEST_CASE_FIXTURE(Fixture, "Loading refuses a color it doesn't know")

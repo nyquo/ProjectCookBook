@@ -127,7 +127,7 @@ BottomSheet {
         sheet.extraUnit = UnitSettings.unitChoices.includes(unit) ? "" : unit
         sheet.addingAisle = false
         aisleForm.name = ""
-        form.contentY = 0
+        form.scrollTo(0)
         sheet.open()
     }
 
@@ -196,13 +196,13 @@ BottomSheet {
         onClicked: sheet.save()
     }
 
-    Flickable {
+    ScrollArea {
         id: form
 
         Layout.fillWidth: true
         Layout.fillHeight: true
         contentHeight: parts.implicitHeight
-        boundsBehavior: Flickable.StopAtBounds
+        yieldsAtStart: true
         clip: true
 
         ColumnLayout {

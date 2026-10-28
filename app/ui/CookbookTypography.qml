@@ -14,5 +14,5 @@ QtObject {
     // A step's text while edited: body-l with taller lines, to fit the mentions
     readonly property real stepTextEditLineHeight: UiTypography.lineHeight(UiTypography.bodyL, 1.75)
     // A recipe's initial over its header, without a photo
-    readonly property font headerInitial: UiTypography.makeFont(96, 800, 0)
+    readonly property font headerInitial: UiTypography.makeFont(110, 800, 0)
 }

@@ -25,52 +25,17 @@ GroupPage {
                              : qsTr("%1 g").arg(Math.round(value))
     }
 
-    // The ingredients card the rows sit in: a title and a stepper, then rows
-    component IngredientsCard: Rectangle {
-        id: card
-
-        default property alias rows: column.data
-        property bool editing: false
-
-        implicitHeight: column.implicitHeight + CookbookMetrics.ingredientsCardPaddingTop
-                        + CookbookMetrics.ingredientsCardPaddingBottom
-        radius: UiMetrics.radiusLg
-        color: page.theme.surface
-
-        ColumnLayout {
-            id: column
-
-            x: CookbookMetrics.ingredientsCardPaddingH
-            y: CookbookMetrics.ingredientsCardPaddingTop
-            width: parent.width - 2 * CookbookMetrics.ingredientsCardPaddingH
-            spacing: 0
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.bottomMargin: UiMetrics.space3
-
-                Text {
-                    Layout.fillWidth: true
-                    text: qsTr("Ingredients")
-                    font: UiTypography.titleL
-                    color: page.theme.ink
-                    Accessible.role: Accessible.Heading
-                }
-
-                Stepper {
-                    visible: !card.editing
-                    text: `${page.servings}`
-                    unit: page.servings === 1 ? qsTr("serving") : qsTr("servings")
-                    canDecrease: page.servings > 1
-                    onDecreaseClicked: page.servings--
-                    onIncreaseClicked: page.servings++
-                }
-            }
-        }
+    // The servings stepper, as the recipe screen gives its ingredients card
+    component ServingsStepper: Stepper {
+        text: `${page.servings}`
+        unit: page.servings === 1 ? qsTr("serving") : qsTr("servings")
+        canDecrease: page.servings > 1
+        onDecreaseClicked: page.servings--
+        onIncreaseClicked: page.servings++
     }
 
     title: qsTr("Ingredients and steps")
-    subtitle: qsTr("IngredientRow, StepCard")
+    subtitle: qsTr("IngredientsCard, IngredientRow, StepCard")
 
     Specimen {
         title: qsTr("IngredientRow in its card")
@@ -78,6 +43,7 @@ GroupPage {
 
         IngredientsCard {
             width: parent.width
+            trailing: ServingsStepper {}
 
             IngredientRow {
                 Layout.fillWidth: true
@@ -116,7 +82,6 @@ GroupPage {
 
         IngredientsCard {
             width: parent.width
-            editing: true
 
             IngredientRow {
                 Layout.fillWidth: true

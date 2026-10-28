@@ -26,7 +26,7 @@ Presentational: properties in, signals out. They hold no data and format nothing
 | Group | Components |
 | --- | --- |
 | Actions | `Button`, `IconButton`, `FloatingActionButton` |
-| Structure | `ScreenHeader`, `SectionHeader`, `ListGroup`, `ListRow` |
+| Structure | `ScreenHeader`, `SectionHeader`, `ListGroup`, `ListRow`, `ScrollArea` |
 | Inputs | `TextField`, `SearchField`, `TextArea`, `TitleField`, `ComboBox` (the design's Select), `CheckBox`, `Switch`, `SegmentedControl` and `SegmentedButton`, `Stepper`, `FilterChip`, `ChoiceChip`, `TagChip`, `InputChip`, `ColorSwatch` |
 | Display | `TagPill`, `IconBadge`, `Thumbnail`, `SpecStrip`, `SplitBar` |
 | Navigation and overlays | `BottomNav` and `BottomNavItem`, `BottomSheet`, `Menu`, `MenuItem` and `MenuSeparator`, `Snackbar`, `EmptyState` |
@@ -41,6 +41,7 @@ Conventions:
 - A dot "in a color family" (`SectionHeader`, `ChoiceChip`) is a `dotColor` the caller picks; `TagChip` draws its dot in the family's fill, as designed.
 - Lists of things to show are models with documented roles: `SpecStrip` takes `label`, `value` and `detail` from any model; `SplitBar` takes an array of parts, since it adds their amounts.
 - `Menu.openUnder(item)` opens a menu under an item. A `Snackbar` lives once per window: `show(message, actionText)`.
+- Scrolling content goes in a `ScrollArea`, never a bare `Flickable`: it has the app's own drag, glide and edge feel (tuned in `UiMotion`). A `ListView` goes in it as `view`. `Menu` and `ComboBox` still scroll their rare overflow with `ListView`'s own.
 - Exclusive choices use Qt's mechanisms: `autoExclusive` or a `ButtonGroup` for chips, `SegmentedControl.currentIndex`.
 - A color family is a `colorFamily` value, already resolved for the theme: `({ fill: theme.tagMint, ink: theme.tagMintInk })`.
 - Disabled is 40% opacity unless the component has its own look (`IconButton`).

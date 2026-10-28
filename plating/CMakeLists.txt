@@ -58,6 +58,7 @@ qt_add_qml_module(plating
         controls/MenuSeparator.qml
         controls/Page.qml
         controls/ScreenHeader.qml
+        controls/ScrollArea.qml
         controls/SearchField.qml
         controls/SectionHeader.qml
         controls/SegmentedButton.qml

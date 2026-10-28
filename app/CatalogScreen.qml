@@ -84,14 +84,13 @@ AppScreen {
         }
 
         // Scrolls past the side margins, to the screen's edges
-        Flickable {
+        ScrollArea {
             Layout.fillWidth: true
             Layout.topMargin: CookbookMetrics.catalogHeaderGap
             implicitHeight: chips.implicitHeight
+            orientation: Qt.Horizontal
             contentWidth: chips.implicitWidth + 2 * screen.sideMargin + screen.SafeArea.margins.left
                           + screen.SafeArea.margins.right
-            flickableDirection: Flickable.HorizontalFlick
-            boundsBehavior: Flickable.StopAtBounds
 
             Row {
                 id: chips
@@ -121,115 +120,117 @@ AppScreen {
             }
         }
 
-        ListView {
-            id: list
-
+        ScrollArea {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.topMargin: UiMetrics.space4
-            clip: true
-            model: catalogModel
-            boundsBehavior: Flickable.StopAtBounds
-            leftMargin: screen.sideMargin + screen.SafeArea.margins.left
-            rightMargin: screen.sideMargin + screen.SafeArea.margins.right
-            // Room for the floating button, so it never hides the last row
-            bottomMargin: screen.snackbarOffset + UiMetrics.space4
 
-            delegate: Column {
-                id: entry
+            view: ListView {
+                id: list
 
-                required property int index
-                required property string ingredientId
-                required property string name
-                required property string icon
-                required property real quantity
-                required property string unit
-                required property string amountText
-                required property string aisleId
-                required property string aisleName
-                required property color fill
-                required property color ink
-                required property color darkFill
-                required property color darkInk
-                required property int groupCount
-                required property bool firstInGroup
-                required property bool lastInGroup
+                clip: true
+                model: catalogModel
+                leftMargin: screen.sideMargin + screen.SafeArea.margins.left
+                rightMargin: screen.sideMargin + screen.SafeArea.margins.right
+                // Room for the floating button, so it never hides the last row
+                bottomMargin: screen.snackbarOffset + UiMetrics.space4
 
-                // No live aisle: neutral colors
-                readonly property bool other: entry.aisleId === ""
-                readonly property colorFamily family: ({
-                                                           fill: screen.theme.dark ? entry.darkFill : entry.fill,
-                                                           ink: screen.theme.dark ? entry.darkInk : entry.ink
-                                                       })
+                delegate: Column {
+                    id: entry
 
-                width: ListView.view.width - list.leftMargin - list.rightMargin
-                topPadding: entry.firstInGroup && entry.index > 0 ? CookbookMetrics.catalogGroupGap : 0
+                    required property int index
+                    required property string ingredientId
+                    required property string name
+                    required property string icon
+                    required property real quantity
+                    required property string unit
+                    required property string amountText
+                    required property string aisleId
+                    required property string aisleName
+                    required property color fill
+                    required property color ink
+                    required property color darkFill
+                    required property color darkInk
+                    required property int groupCount
+                    required property bool firstInGroup
+                    required property bool lastInGroup
 
-                SectionHeader {
-                    width: parent.width
-                    visible: entry.firstInGroup
-                    text: entry.other ? qsTr("Other") : entry.aisleName
-                    count: entry.groupCount.toLocaleString(Qt.locale(), "f", 0)
-                    dotColor: entry.other ? screen.theme.inkMuted : entry.family.ink
-                }
+                    // No live aisle: neutral colors
+                    readonly property bool other: entry.aisleId === ""
+                    readonly property colorFamily family: ({
+                                                               fill: screen.theme.dark ? entry.darkFill : entry.fill,
+                                                               ink: screen.theme.dark ? entry.darkInk : entry.ink
+                                                           })
 
-                // This row's part of its aisle's card
-                Rectangle {
-                    width: parent.width
-                    height: row.height
-                    color: screen.theme.surface
-                    topLeftRadius: entry.firstInGroup ? UiMetrics.radiusLg : 0
-                    topRightRadius: entry.firstInGroup ? UiMetrics.radiusLg : 0
-                    bottomLeftRadius: entry.lastInGroup ? UiMetrics.radiusLg : 0
-                    bottomRightRadius: entry.lastInGroup ? UiMetrics.radiusLg : 0
+                    width: ListView.view.width - list.leftMargin - list.rightMargin
+                    topPadding: entry.firstInGroup && entry.index > 0 ? CookbookMetrics.catalogGroupGap : 0
 
+                    SectionHeader {
+                        width: parent.width
+                        visible: entry.firstInGroup
+                        text: entry.other ? qsTr("Other") : entry.aisleName
+                        count: entry.groupCount.toLocaleString(Qt.locale(), "f", 0)
+                        dotColor: entry.other ? screen.theme.inkMuted : entry.family.ink
+                    }
+
+                    // This row's part of its aisle's card
                     Rectangle {
-                        x: UiMetrics.listGroupIconPaddingH
-                        width: parent.width - 2 * UiMetrics.listGroupIconPaddingH
-                        height: UiMetrics.hairline
-                        visible: !entry.firstInGroup
-                        color: screen.theme.line
-                    }
+                        width: parent.width
+                        height: row.height
+                        color: screen.theme.surface
+                        topLeftRadius: entry.firstInGroup ? UiMetrics.radiusLg : 0
+                        topRightRadius: entry.firstInGroup ? UiMetrics.radiusLg : 0
+                        bottomLeftRadius: entry.lastInGroup ? UiMetrics.radiusLg : 0
+                        bottomRightRadius: entry.lastInGroup ? UiMetrics.radiusLg : 0
 
-                    ListRow {
-                        id: row
+                        Rectangle {
+                            x: UiMetrics.listGroupIconPaddingH
+                            width: parent.width - 2 * UiMetrics.listGroupIconPaddingH
+                            height: UiMetrics.hairline
+                            visible: !entry.firstInGroup
+                            color: screen.theme.line
+                        }
 
-                        x: UiMetrics.listGroupIconPaddingH
-                        width: parent.width - 2 * UiMetrics.listGroupIconPaddingH
-                        text: entry.name
-                        subtitle: qsTr("One tap adds %1").arg(entry.amountText)
-                        strong: true
-                        leading: IconBadge {
-                            shape: IconBadge.Tile
-                            size: IconBadge.Small
-                            iconSource: IngredientIcons.source(entry.icon)
-                            family: entry.family
-                            muted: entry.other
+                        ListRow {
+                            id: row
+
+                            x: UiMetrics.listGroupIconPaddingH
+                            width: parent.width - 2 * UiMetrics.listGroupIconPaddingH
+                            text: entry.name
+                            subtitle: qsTr("One tap adds %1").arg(entry.amountText)
+                            strong: true
+                            leading: IconBadge {
+                                shape: IconBadge.Tile
+                                size: IconBadge.Small
+                                iconSource: IngredientIcons.source(entry.icon)
+                                family: entry.family
+                                muted: entry.other
+                            }
+                            trailing: Icon {
+                                implicitWidth: CookbookMetrics.catalogEditIcon
+                                implicitHeight: CookbookMetrics.catalogEditIcon
+                                source: CookbookIcons.source("edit")
+                                color: screen.theme.inkMuted
+                            }
+                            onClicked: itemSheet.openItem(entry.ingredientId, entry.name, entry.aisleId, entry.icon,
+                                                          entry.quantity, entry.unit)
                         }
-                        trailing: Icon {
-                            implicitWidth: CookbookMetrics.catalogEditIcon
-                            implicitHeight: CookbookMetrics.catalogEditIcon
-                            source: CookbookIcons.source("edit")
-                            color: screen.theme.inkMuted
-                        }
-                        onClicked: itemSheet.openItem(entry.ingredientId, entry.name, entry.aisleId, entry.icon,
-                                                      entry.quantity, entry.unit)
                     }
                 }
-            }
 
-            // Over the list rather than in its content, which scrolls
-            Text {
-                parent: list
-                anchors.centerIn: parent
-                width: parent.width - 2 * screen.sideMargin
-                visible: list.count === 0
-                text: catalogModel.searchText !== "" ? qsTr("Nothing in the catalog matches “%1”.").arg(catalogModel.searchText)
-                                                : qsTr("No items here yet.")
-                font: UiTypography.bodyL
-                color: screen.theme.inkMuted
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
+                // Over the list rather than in its content, which scrolls
+                Text {
+                    parent: list
+                    anchors.centerIn: parent
+                    width: parent.width - 2 * screen.sideMargin
+                    visible: list.count === 0
+                    text: catalogModel.searchText !== "" ? qsTr("Nothing in the catalog matches “%1”.").arg(catalogModel.searchText)
+                                                    : qsTr("No items here yet.")
+                    font: UiTypography.bodyL
+                    color: screen.theme.inkMuted
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                }
             }
         }
     }

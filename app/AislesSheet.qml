@@ -53,12 +53,12 @@ BottomSheet {
         wrapMode: Text.Wrap
     }
 
-    Flickable {
+    ScrollArea {
         Layout.fillWidth: true
         Layout.fillHeight: true
         implicitHeight: parts.implicitHeight
         contentHeight: parts.implicitHeight
-        boundsBehavior: Flickable.StopAtBounds
+        yieldsAtStart: true
         clip: true
 
         ColumnLayout {

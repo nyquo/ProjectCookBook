@@ -22,6 +22,7 @@ qt_add_qml_module(appProjectCookbook
         CatalogScreen.qml
         ErrorTexts.qml
         HomeScreen.qml
+        RecipeScreen.qml
         ScreenStack.qml
         SettingsScreen.qml
         StartupError.qml
@@ -40,7 +41,12 @@ qt_add_qml_module(appProjectCookbook
         DefaultFilterSettings.hpp DefaultFilterSettings.cpp
         KeepScreenOn.hpp KeepScreenOn.cpp
         Overloaded.hpp
+        PhotoStore.hpp PhotoStore.cpp
         RecipeFieldSettings.hpp RecipeFieldSettings.cpp
+        RecipeListModel.hpp RecipeListModel.cpp
+        RecipeModel.hpp RecipeModel.cpp
+        RowListModel.hpp RowListModel.cpp
+        sampleRecipes.hpp sampleRecipes.cpp
         TagColorListModel.hpp TagColorListModel.cpp
         TagListModel.hpp TagListModel.cpp
         UnitSettings.hpp UnitSettings.cpp

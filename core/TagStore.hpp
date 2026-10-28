@@ -87,10 +87,9 @@ public:
   // Fails with DuplicateName if a live tag took the name meanwhile
   [[nodiscard]] std::expected<void, TagError> restore(std::string_view id);
 
-  // The color least used among live tags; ties go in TagFamily order
+  // The color least used among live tags; ties go in TagFamily order. The
+  // recipes that carry a tag: RecipeStore::recipeCount().
   TagFamily nextColor() const;
-  // The recipes that carry the tag
-  int recipeCount(std::string_view id) const;
 
   // Not owned: an observer must unregister before it's destroyed
   void addObserver(TagObserver& observer);

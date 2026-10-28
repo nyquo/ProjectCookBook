@@ -81,7 +81,9 @@ From Git Bash, with a debug build running on the emulator or phone:
 tools/pull-db.sh             # add an adb serial if several devices are connected
 ```
 
-It copies the app's database to `scratch/data.db` (git-ignored); open that file with VS Code's *SQLite Viewer* extension. The desktop build keeps its database in `%APPDATA%\appProjectCookbook\data.db`. The schema is described in [docs/schema.md](docs/schema.md).
+It copies the app's database to `scratch/data.db` (git-ignored); open that file with VS Code's *SQLite Viewer* extension. The desktop build keeps its database in `%APPDATA%\appProjectCookbook\data.db`, and recipe photos in the `photos` folder next to it. The schema is described in [docs/schema.md](docs/schema.md).
+
+Debug builds add sample recipes at startup when the recipe table is empty. To get them back, delete the database (on a phone, clear the app's data).
 
 ## Using an IDE
 

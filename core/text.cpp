@@ -144,4 +144,23 @@ std::string canonicalName(std::string_view name)
   return result;
 }
 
+std::size_t codePointCount(std::string_view text)
+{
+  std::size_t count = 0;
+  while (!text.empty()) {
+    text.remove_prefix(decodeUtf8(text).length);
+    ++count;
+  }
+  return count;
+}
+
+std::size_t byteOffset(std::string_view text, std::size_t index)
+{
+  std::size_t offset = 0;
+  for (std::size_t i = 0; i < index && offset < text.size(); ++i) {
+    offset += decodeUtf8(text.substr(offset)).length;
+  }
+  return offset;
+}
+
 }

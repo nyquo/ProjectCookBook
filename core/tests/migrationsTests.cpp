@@ -316,7 +316,7 @@ TEST_CASE("The ingredient table itself rejects invalid rows")
         SQLITE_CONSTRAINT_CHECK);
   CHECK(insert(db, with([](auto& r) { r.icon = ""; })) ==
         SQLITE_CONSTRAINT_CHECK);
-  CHECK(insert(db, with([](auto& r) { r.unit = "tbsp"; })) ==
+  CHECK(insert(db, with([](auto& r) { r.unit = "spoonful"; })) ==
         SQLITE_CONSTRAINT_CHECK);
   CHECK(insert(db, with([](auto& r) { r.quantity = 0.0; })) ==
         SQLITE_CONSTRAINT_CHECK);

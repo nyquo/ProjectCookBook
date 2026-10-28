@@ -57,21 +57,26 @@ static QString fromCode(std::string_view code)
 }
 
 TagListModel::TagListModel(QObject* parent)
-  : TagListModel(app::backend().tags(), parent)
+  : TagListModel(app::backend().tags(), app::backend().recipes(), parent)
 {
 }
 
-TagListModel::TagListModel(core::TagStore& store, QObject* parent)
+TagListModel::TagListModel(core::TagStore& store,
+                           core::RecipeStore& recipes,
+                           QObject* parent)
   : QAbstractListModel(parent)
   , m_store(store)
+  , m_recipes(recipes)
   , m_collator(app::nameCollator())
 {
   m_rows = computeRows();
   m_store.addObserver(*this);
+  m_recipes.addObserver(*this);
 }
 
 TagListModel::~TagListModel()
 {
+  m_recipes.removeObserver(*this);
   m_store.removeObserver(*this);
 }
 
@@ -158,6 +163,13 @@ void TagListModel::tagChanged(const core::TagChange&) noexcept
   refresh();
 }
 
+void TagListModel::recipeAboutToChange(const core::RecipeChange&) noexcept {}
+
+void TagListModel::recipeChanged(const core::RecipeChange&) noexcept
+{
+  refresh();
+}
+
 std::vector<TagListModel::Row> TagListModel::computeRows() const
 {
   const std::vector<core::Tag>& tags = m_store.tags();
@@ -168,7 +180,7 @@ std::vector<TagListModel::Row> TagListModel::computeRows() const
     rows.push_back({ QString::fromStdString(tag.id),
                      QString::fromStdString(tag.name),
                      fromCode(core::tagFamilyCode(tag.color)),
-                     m_store.recipeCount(tag.id) });
+                     m_recipes.recipeCount(tag.id) });
   }
   return rows;
 }

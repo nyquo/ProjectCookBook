@@ -5,8 +5,8 @@ The app's own components, about recipes, ingredients and shopping: a static QML 
 | Group | Components |
 | --- | --- |
 | Quantities | `QuantityPill`, `QuantityField` |
-| Recipes | `RecipeHeader`, `RecipeRow`, `PlannedRecipeCard`, `SortMenu`, `NoteCard` |
-| Ingredients and steps | `IngredientRow`, `StepCard` |
+| Recipes | `RecipeHeader`, `RecipeActions`, `RecipeRow`, `PlannedRecipeCard`, `SortMenu`, `NoteCard` |
+| Ingredients and steps | `IngredientsCard`, `IngredientRow`, `StepCard` |
 | Shopping | `ShoppingItem`, `IngredientTile` |
 | Catalog and settings | `Card`, `IconDiscStack`, `AislesButton`, `ColorDot`, `ColorMenu`, `AisleForm`, `AisleEditRow`, `IngredientIconGrid`, `AddField`, `TagEditRow` |
 
@@ -25,6 +25,7 @@ To add one, put `<name>.svg` in its folder, then list it in `CMakeLists.txt` (`R
 
 ## Notes
 
+- `RecipeHeader` shows its buttons through `RecipeActions`; `showActions: false` hides them, for a screen that floats its own `RecipeActions` so they stay while the recipe scrolls. Items given to the header are further sections of its sheet, under the description.
 - `QuantityField` steps and converts with the unit data it's given (`units`: key, label, step, kind, factor), and emits `amountEdited()` and `unitEdited()`: the caller formats the amount and the summary. `header: false` drops its "Quantity" header, for a caller that labels the card itself.
 - `SortMenu` builds the hint "Tap again for …" by lowercasing the other label's first letter, which suits English and French labels.
 - `StepCard` lays its text out as a flow of words, so a mention can be a token that wraps with the words around it. The cost: lines break only at spaces (no hyphenation), and the text can't be selected. The card exposes the whole text to screen readers.

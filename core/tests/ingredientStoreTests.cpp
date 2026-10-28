@@ -122,7 +122,7 @@ TEST_CASE_FIXTURE(Fixture, "Loading refuses a unit it doesn't know")
 {
   // Only a write that bypassed the CHECK constraints could store one
   db.exec("PRAGMA ignore_check_constraints = ON;"
-          "UPDATE ingredient SET one_tap_unit = 'tbsp' "
+          "UPDATE ingredient SET one_tap_unit = 'spoonful' "
           "WHERE display_name = 'Milk'");
   CHECK(test::errorCode([&] {
           core::IngredientStore reloaded(db, clock.function(), aisles);
@@ -175,6 +175,12 @@ TEST_CASE_FIXTURE(Fixture, "Every unit is stored and read back")
                            Unit::Ounces,
                            Unit::Pounds,
                            Unit::FluidOunces,
+                           Unit::Teaspoons,
+                           Unit::Tablespoons,
+                           Unit::Cups,
+                           Unit::Cloves,
+                           Unit::Pinches,
+                           Unit::Cans,
                            Unit::Pieces }) {
     CAPTURE(core::unitCode(unit));
     REQUIRE(store.updateCatalogItem(
@@ -202,6 +208,46 @@ TEST_CASE_FIXTURE(Fixture, "addToCatalog rejects blank names and catalog items")
 
   CHECK(store.ingredients() == before);
   CHECK(observer.notifications.empty());
+}
+
+TEST_CASE_FIXTURE(Fixture,
+                  "dictionaryId finds a live ingredient by canonical name, "
+                  "in the catalog or not")
+{
+  const core::Ingredient milk = named("Milk");
+  CHECK(store.dictionaryId(" MILK ") == milk.id);
+  store.removeFromCatalog(milk.id);
+  observer.notifications.clear();
+
+  CHECK(store.dictionaryId("milk") == milk.id);
+  CHECK(store.dictionaryId("Crème  Fraîche") == named("Crème fraîche").id);
+  CHECK(store.ingredients().size() == 34);
+  CHECK(observer.notifications.empty());
+}
+
+TEST_CASE_FIXTURE(Fixture,
+                  "dictionaryId adds a missing ingredient outside the catalog")
+{
+  clock.now += 1min;
+  const auto id = store.dictionaryId("  Noix de muscade ");
+
+  REQUIRE(id);
+  CHECK(store.ingredients().back() == core::Ingredient{ *id,
+                                                        "Noix de muscade",
+                                                        "noix de muscade",
+                                                        std::nullopt,
+                                                        std::nullopt,
+                                                        std::nullopt,
+                                                        false,
+                                                        clock.now });
+  CHECK(observer.notifications ==
+        notificationsFor(core::IngredientInserted{ 34 }, 34, 35));
+  CHECK(reloadMatches());
+
+  CHECK(store.dictionaryId("NOIX DE MUSCADE") == *id);
+  CHECK(store.dictionaryId(" \t") ==
+        std::unexpected(IngredientError::EmptyName));
+  CHECK(store.ingredients().size() == 35);
 }
 
 TEST_CASE_FIXTURE(Fixture,
