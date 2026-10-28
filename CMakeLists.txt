@@ -42,8 +42,9 @@ if(COOKBOOK_BUILD_APP)
     set(CMAKE_DISABLE_FIND_PACKAGE_Qt6GrpcQuick ON)
     set(CMAKE_DISABLE_FIND_PACKAGE_Qt6ProtobufQuick ON)
 
-    # Svg: the image format plugin that loads the ingredient icons
-    find_package(Qt6 6.10 REQUIRED COMPONENTS Quick QuickControls2 Svg)
+    # Svg: the image format plugin that loads the icons. LinguistTools: build
+    # tools only (lupdate, lrelease), nothing linked.
+    find_package(Qt6 6.10 REQUIRED COMPONENTS Quick QuickControls2 Svg LinguistTools)
 
     qt_standard_project_setup(REQUIRES 6.10)
     # One folder for every QML module, so qmllint and qmlcachegen find Plating

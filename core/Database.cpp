@@ -85,6 +85,18 @@ Statement& Statement::bindInt64(int index, std::int64_t value)
   return *this;
 }
 
+Statement& Statement::bind(int index, double value)
+{
+  check(sqlite3_bind_double(m_statement.get(), index, value));
+  return *this;
+}
+
+Statement& Statement::bindNull(int index)
+{
+  check(sqlite3_bind_null(m_statement.get(), index));
+  return *this;
+}
+
 Statement& Statement::bind(int index, std::string_view value)
 {
   // An empty view may have a null data(), which SQLite would bind as NULL.
@@ -117,9 +129,19 @@ void Statement::run()
   }
 }
 
+bool Statement::columnIsNull(int index) const
+{
+  return sqlite3_column_type(m_statement.get(), index) == SQLITE_NULL;
+}
+
 std::int64_t Statement::columnInt64(int index) const
 {
   return sqlite3_column_int64(m_statement.get(), index);
+}
+
+double Statement::columnDouble(int index) const
+{
+  return sqlite3_column_double(m_statement.get(), index);
 }
 
 std::string Statement::columnText(int index) const

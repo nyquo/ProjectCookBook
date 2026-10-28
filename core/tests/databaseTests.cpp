@@ -36,6 +36,29 @@ TEST_CASE("Statements bind and read integers and UTF-8 text")
   CHECK_FALSE(select.step());
 }
 
+TEST_CASE("Statements bind and read reals and NULL")
+{
+  core::Database db(":memory:");
+  db.exec("CREATE TABLE t (i INTEGER NOT NULL, r REAL, s TEXT) STRICT");
+  db.prepare("INSERT INTO t (i, r, s) VALUES (1, ?1, ?2)")
+    .bind(1, 0.25)
+    .bind(2, std::optional<std::string>("x"))
+    .run();
+  db.prepare("INSERT INTO t (i, r, s) VALUES (2, ?1, ?2)")
+    .bind(1, std::optional<double>())
+    .bindNull(2)
+    .run();
+
+  core::Statement select = db.prepare("SELECT r, s FROM t ORDER BY i");
+  REQUIRE(select.step());
+  CHECK(select.columnDouble(0) == 0.25);
+  CHECK_FALSE(select.columnIsNull(0));
+  CHECK(select.columnText(1) == "x");
+  REQUIRE(select.step());
+  CHECK(select.columnIsNull(0));
+  CHECK(select.columnIsNull(1));
+}
+
 TEST_CASE("Failures throw DatabaseError with SQLite's code")
 {
   core::Database db(":memory:");

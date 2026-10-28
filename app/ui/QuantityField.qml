@@ -35,6 +35,9 @@ T.Control {
     property string amountText
     // Default: the header's pill ("500 ml")
     property string summary
+    // Default: the "Quantity" header and its pill. Off, the caller labels the
+    // card itself.
+    property bool header: true
 
     signal amountEdited(real amount)
     signal unitEdited(string unit, real amount)
@@ -134,6 +137,7 @@ T.Control {
             spacing: CookbookMetrics.quantityFieldGap
 
             RowLayout {
+                visible: control.header
                 Layout.fillWidth: true
 
                 Text {
@@ -171,6 +175,8 @@ T.Control {
 
                     delegate: UnitChip {
                         Layout.fillWidth: true
+                        // Equal columns, whatever the labels' widths
+                        Layout.preferredWidth: 1
                         size: ChoiceChip.Grid
                         font: checked ? UiTypography.labelExtraBold : UiTypography.label
                     }

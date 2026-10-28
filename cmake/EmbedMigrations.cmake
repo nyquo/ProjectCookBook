@@ -4,7 +4,8 @@
 # Embeds every <SCHEMA_DIR>/NNN_name.sql file into a C++ header, so the core
 # needs no file access at runtime. Files must be numbered 001, 002, ... with no
 # gaps; NNN becomes the schema version (PRAGMA user_version) after that file ran.
-# The SQL is written as hex bytes: no escaping, no string-literal length limits.
+# The SQL is written as an array of bytes, not a string literal: no escaping,
+# no string-literal length limits.
 
 file(GLOB files RELATIVE "${SCHEMA_DIR}" "${SCHEMA_DIR}/*.sql")
 list(SORT files)
@@ -25,6 +26,9 @@ foreach(file IN LISTS files)
     get_filename_component(name "${file}" NAME_WE)
     file(READ "${SCHEMA_DIR}/${file}" hex HEX)
     string(REGEX REPLACE "(..)" "0x\\1," hex "${hex}")
+    # Bytes from 0x80 (UTF-8 text) don't fit a signed char as numbers: write
+    # them as character literals, which compilers take as is
+    string(REGEX REPLACE "0x([89a-f].)," "'\\\\x\\1'," hex "${hex}")
     string(APPEND arrays "inline constexpr char sql_${name}[] = {${hex}0x00};\n")
     string(APPEND entries "    Migration{${version}, \"${name}\", {sql_${name}, sizeof(sql_${name}) - 1}},\n")
 endforeach()

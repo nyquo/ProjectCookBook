@@ -1,28 +1,12 @@
 #include "core/AisleStore.hpp"
 
 #include "core/Database.hpp"
+#include "core/text.hpp"
 
 #include <algorithm>
 #include <stdexcept>
 
 namespace core {
-
-static bool isAsciiSpace(char c)
-{
-  return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' ||
-         c == '\v';
-}
-
-static std::string_view trimmed(std::string_view text)
-{
-  while (!text.empty() && isAsciiSpace(text.front())) {
-    text.remove_prefix(1);
-  }
-  while (!text.empty() && isAsciiSpace(text.back())) {
-    text.remove_suffix(1);
-  }
-  return text;
-}
 
 static char asciiLower(char c)
 {
@@ -200,13 +184,23 @@ void AisleStore::move(int from, int to)
   });
 }
 
-void AisleStore::remove(std::string_view id)
+std::expected<void, AisleError> AisleStore::remove(std::string_view id)
 {
   checkNotNotifying();
   const int index = indexOf(id);
-  // TODO(shopping list): an aisle can only be deleted while no shopping-list
-  // item uses it. When that table exists, check it here, before writing, and
-  // return a new AisleError::NotEmpty (remove() then returns std::expected).
+  // The ingredient store writes through before changing memory, so the table
+  // is as current as its memory.
+  // TODO(shopping list): shopping-list items will hold the aisle too: check
+  // them here as well.
+  {
+    Statement inUse =
+      m_db.prepare("SELECT EXISTS (SELECT 1 FROM ingredient WHERE aisle_id = "
+                   "?1 AND in_catalog = 1 AND deleted = 0)");
+    inUse.bind(1, id);
+    if (inUse.step() && inUse.columnInt64(0) != 0) {
+      return std::unexpected(AisleError::InUse);
+    }
+  }
 
   const Timestamp now = m_clock();
   Transaction transaction(m_db);
@@ -227,6 +221,7 @@ void AisleStore::remove(std::string_view id)
     m_aisles.erase(m_aisles.begin() + index);
     setModifiedAt(index, count() - 1, now);
   });
+  return {};
 }
 
 std::expected<void, AisleError> AisleStore::restore(std::string_view id)
@@ -281,12 +276,12 @@ std::expected<void, AisleError> AisleStore::restore(std::string_view id)
 
 void AisleStore::addObserver(AisleObserver& observer)
 {
-  m_observers.push_back(&observer);
+  m_observers.add(observer);
 }
 
 void AisleStore::removeObserver(AisleObserver& observer)
 {
-  std::erase(m_observers, &observer);
+  m_observers.remove(observer);
 }
 
 int AisleStore::indexOf(std::string_view id) const
@@ -307,8 +302,7 @@ void AisleStore::checkIndex(int index) const
 
 void AisleStore::checkNotNotifying() const
 {
-  // Memory is mid-change: a nested write would act on stale state
-  if (m_notifying) {
+  if (m_observers.notifying()) {
     throw std::logic_error(
       "AisleStore: no changes from inside an observer notification");
   }
@@ -337,35 +331,13 @@ void AisleStore::setModifiedAt(int first, int last, Timestamp time)
   }
 }
 
-// noexcept: the write has committed, so if memory or an observer can't follow,
-// terminating beats running on, out of sync; the next launch reloads the
-// database.
 template<typename Mutation>
 void AisleStore::apply(const AisleChange& change, Mutation mutate) noexcept
 {
-  m_notifying = true;
-  // Observers may register or unregister others while notified. Each one
-  // registered by the end of this loop saw the old list, so it gets both calls.
-  std::vector<AisleObserver*> notified;
-  const auto nextToNotify = [&]() -> AisleObserver* {
-    for (AisleObserver* observer : m_observers) {
-      if (std::ranges::find(notified, observer) == notified.end()) {
-        return observer;
-      }
-    }
-    return nullptr;
-  };
-  while (AisleObserver* observer = nextToNotify()) {
-    notified.push_back(observer);
-    observer->aisleAboutToChange(change);
-  }
-  mutate();
-  for (AisleObserver* observer : notified) {
-    if (std::ranges::find(m_observers, observer) != m_observers.end()) {
-      observer->aisleChanged(change);
-    }
-  }
-  m_notifying = false;
+  m_observers.notify(
+    [&](AisleObserver& observer) { observer.aisleAboutToChange(change); },
+    mutate,
+    [&](AisleObserver& observer) { observer.aisleChanged(change); });
 }
 
 }

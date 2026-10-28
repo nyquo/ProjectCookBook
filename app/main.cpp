@@ -1,12 +1,15 @@
+#include "AppearanceSettings.hpp"
 #include "appBackend.hpp"
 #include "core/Backend.hpp"
 #include "core/Database.hpp"
+#include "core/appearance.hpp"
 
 #include <QDir>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QStandardPaths>
+#include <QTranslator>
 #include <QtQml/QQmlExtensionPlugin>
 
 #include <optional>
@@ -29,12 +32,23 @@ int main(int argc, char* argv[])
   QGuiApplication::setApplicationDisplayName(QStringLiteral(APP_DISPLAY_NAME));
   QGuiApplication::setApplicationVersion(QStringLiteral(APP_VERSION));
 
+  // The texts are written in English; this file only gives their plural forms
+  // ("1 piece", "6 pieces"), whatever the user's language.
+  QTranslator plurals;
+  if (plurals.load(QStringLiteral(":/i18n/projectcookbook_en.qm"))) {
+    QCoreApplication::installTranslator(&plurals);
+  } else {
+    qWarning("Can't load the English plural forms");
+  }
+
   // Declared before the engine, so it outlives every model QML creates
   std::optional<core::Backend> backend;
   QString startupError;
   try {
     backend.emplace(databasePath());
     app::setBackend(*backend);
+    // Before the first frame, so the app never shows the wrong theme
+    AppearanceSettings::applyColorScheme(core::themeMode(backend->settings()));
   } catch (const core::DatabaseError& error) {
     qCritical("Can't open the database: %s", error.what());
     startupError = QString::fromUtf8(error.what());

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -62,14 +63,24 @@ public:
   {
     return bindInt64(index, static_cast<std::int64_t>(value));
   }
+  Statement& bind(int index, double value);
   Statement& bind(int index, std::string_view value);
+  Statement& bindNull(int index);
+  // NULL without a value
+  template<typename T>
+  Statement& bind(int index, const std::optional<T>& value)
+  {
+    return value ? bind(index, *value) : bindNull(index);
+  }
 
   // True while there is a row to read
   bool step();
   // For statements that return no rows
   void run();
 
+  bool columnIsNull(int index) const;
   std::int64_t columnInt64(int index) const;
+  double columnDouble(int index) const;
   std::string columnText(int index) const;
 
 private:

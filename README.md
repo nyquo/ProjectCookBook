@@ -38,7 +38,7 @@ Useful flags:
 * `-Serial <id>` picks a device when several are connected.
 * `-Avd <name>` picks which emulator to boot.
 
-The script reads the CPU ABI from the device and builds to match: x86_64 for the emulator, arm64-v8a for most phones, armeabi-v7a for older 32-bit phones. The home screen shows the platform and CPU architecture, so you can see which build is running.
+The script reads the CPU ABI from the device and builds to match: x86_64 for the emulator, arm64-v8a for most phones, armeabi-v7a for older 32-bit phones. The bottom of the Settings screen shows the platform and CPU architecture, so you can see which build is running.
 
 ### First run on a phone
 

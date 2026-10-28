@@ -21,6 +21,7 @@ qt_add_qml_module(showcase
         GroupPage.qml
         Specimen.qml
         pages/ActionsPage.qml
+        pages/CatalogPage.qml
         pages/DisplayPage.qml
         pages/IngredientsPage.qml
         pages/StructurePage.qml

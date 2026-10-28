@@ -1,9 +1,34 @@
 import QtQuick
-import QtQuick.Layouts
 import Plating
 
 ApplicationWindow {
     id: window
+
+    // The theme's accent, from the setting
+    readonly property int accentChoice: {
+        switch (AppearanceSettings.accent) {
+        case AppearanceSettings.Accent.Spirulina:
+            return UiTheme.Spirulina
+        case AppearanceSettings.Accent.Blueberry:
+            return UiTheme.Blueberry
+        case AppearanceSettings.Accent.Saffron:
+            return UiTheme.Saffron
+        case AppearanceSettings.Accent.Basil:
+            return UiTheme.Basil
+        default:
+            return UiTheme.Raspberry
+        }
+    }
+
+    // What the snackbar's action runs
+    property var snackbarAction: null
+
+    // Shows a message at the bottom of the window, with an optional action
+    // ("Undo") that runs `action`
+    function notify(message: string, actionText: string, action: var) {
+        window.snackbarAction = action ?? null
+        snackbar.show(message, actionText)
+    }
 
     // Phone-like size for desktop previews; ignored on Android (always fullscreen)
     width: 400
@@ -11,14 +36,26 @@ ApplicationWindow {
     visible: true
     title: AppInfo.name
 
-    // Follows the system until the theme setting exists; devThemeRow overrides
-    // it meanwhile (Unknown = System).
-    // TODO: when the app's theme differs from the system's, the status bar icons
-    // keep the system's contrast and can become unreadable.
+    // Edge to edge: on Android the window goes under the status and navigation
+    // bars, and each screen pads itself with SafeArea.
+    flags: Qt.platform.os === "android" ? Qt.Window | Qt.ExpandedClientAreaHint : Qt.Window
+    topPadding: 0
+    bottomPadding: 0
+    leftPadding: 0
+    rightPadding: 0
+
+    // A forced theme doesn't depend on the platform honoring the color scheme
+    // AppearanceSettings requests; System follows the system, live.
     Plating.theme: {
-        const scheme = devThemeRow.scheme !== Qt.ColorScheme.Unknown
-                       ? devThemeRow.scheme : Application.styleHints.colorScheme
-        return scheme === Qt.ColorScheme.Dark ? DefaultDarkTheme : DefaultLightTheme
+        switch (AppearanceSettings.themeMode) {
+        case AppearanceSettings.ThemeMode.Light:
+            return DefaultLightTheme
+        case AppearanceSettings.ThemeMode.Dark:
+            return DefaultDarkTheme
+        default:
+            return Application.styleHints.colorScheme === Qt.ColorScheme.Dark ? DefaultDarkTheme
+                                                                               : DefaultLightTheme
+        }
     }
 
     Binding {
@@ -29,49 +66,48 @@ ApplicationWindow {
     Binding {
         target: DefaultLightTheme
         property: "accentChoice"
-        value: devThemeRow.accentChoice
+        value: window.accentChoice
     }
     Binding {
         target: DefaultDarkTheme
         property: "accentChoice"
-        value: devThemeRow.accentChoice
+        value: window.accentChoice
     }
 
-    Page {
+    ScreenStack {
+        id: stack
+
         anchors.fill: parent
-
-        header: Label {
-            padding: UiMetrics.space4
-            text: window.title
-            font: UiTypography.titleL
+        focus: true
+        initialItem: HomeScreen {
+            onSettingsClicked: stack.push(settingsScreen)
         }
 
-        AislesScreen {
-            anchors.fill: parent
-            anchors.leftMargin: UiMetrics.space4
-            anchors.rightMargin: UiMetrics.space4
+        // A message's action acts on the screen that showed it, which a pop
+        // destroys
+        onCurrentItemChanged: {
+            window.snackbarAction = null
+            snackbar.close()
         }
+    }
 
-        footer: ColumnLayout {
-            spacing: 0
+    Component {
+        id: settingsScreen
 
-            // TEMPORARY: remove with the theme and accent settings
-            DevThemeRow {
-                id: devThemeRow
+        SettingsScreen {}
+    }
 
-                Layout.fillWidth: true
-                Layout.margins: UiMetrics.space2
-            }
+    // Over the sheets, which open later
+    Snackbar {
+        id: snackbar
 
-            Label {
-                Layout.fillWidth: true
-                padding: UiMetrics.space2
-                opacity: 0.7
-                elide: Text.ElideRight
-                font: UiTypography.caption
-                text: `${AppInfo.platform} · ${AppInfo.cpuArchitecture} · `
-                      + qsTr("v%1 · Qt %2").arg(AppInfo.version).arg(AppInfo.qtVersion)
-            }
+        z: 2
+        bottomOffset: (stack.currentItem as AppScreen)?.snackbarOffset ?? 0
+        onActionClicked: {
+            const action = window.snackbarAction
+            window.snackbarAction = null
+            if (action)
+                action()
         }
     }
 }

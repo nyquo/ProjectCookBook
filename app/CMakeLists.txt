@@ -2,20 +2,58 @@ qt_add_executable(appProjectCookbook
     main.cpp
 )
 
+set_source_files_properties(
+    AisleColors.qml
+    ErrorTexts.qml
+    TagFamilies.qml
+    PROPERTIES QT_QML_SINGLETON_TYPE TRUE
+)
+
 qt_add_qml_module(appProjectCookbook
     URI ProjectCookbook
     # Also gives qmlcachegen the modules' import paths, so it compiles typed code
     DEPENDENCIES TARGET plating TARGET cookbookui
     QML_FILES
         Main.qml
-        AislesScreen.qml
-        DevThemeRow.qml
+        AisleColors.qml
+        AislesSheet.qml
+        AppScreen.qml
+        CatalogItemSheet.qml
+        CatalogScreen.qml
+        ErrorTexts.qml
+        HomeScreen.qml
+        ScreenStack.qml
+        SettingsScreen.qml
         StartupError.qml
+        TabPage.qml
+        TagFamilies.qml
+        TagsScreen.qml
     SOURCES
         AisleListModel.hpp AisleListModel.cpp
+        AmountFormat.hpp AmountFormat.cpp
         appBackend.hpp appBackend.cpp
+        AppearanceSettings.hpp AppearanceSettings.cpp
         AppInfo.hpp AppInfo.cpp
+        CatalogListModel.hpp CatalogListModel.cpp
+        collation.hpp collation.cpp
+        CookingSettings.hpp CookingSettings.cpp
+        DefaultFilterSettings.hpp DefaultFilterSettings.cpp
+        KeepScreenOn.hpp KeepScreenOn.cpp
+        Overloaded.hpp
+        RecipeFieldSettings.hpp RecipeFieldSettings.cpp
         TagColorListModel.hpp TagColorListModel.cpp
+        TagListModel.hpp TagListModel.cpp
+        UnitSettings.hpp UnitSettings.cpp
+)
+
+# The texts are written in English. i18n/projectcookbook_en.ts only gives the
+# English plural forms of the texts that take a count (%n): "1 piece",
+# "6 pieces". After adding or changing such a text, run the
+# update_translations target, then fill in the new forms in that file.
+qt_add_translations(appProjectCookbook
+    SOURCE_TARGETS appProjectCookbook cookbookui
+    TS_FILE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/i18n"
+    TS_FILE_BASE projectcookbook
 )
 
 cookbook_set_warnings(appProjectCookbook)
